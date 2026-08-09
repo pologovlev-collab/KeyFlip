@@ -1,0 +1,15 @@
+.vs/
+**/bin/
+**/obj/
+artifacts/
+release/
+logs/
+*.log
+*.user
+*.suo
+*.tmp
+*.bak
+.env
+.env.*
+secrets/
+

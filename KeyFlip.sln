@@ -1,0 +1,25 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyFlip", "src\KeyFlip\KeyFlip.csproj", "{CCB1B300-6765-4AC1-BB36-52A293632CEC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyFlip.Tests", "tests\KeyFlip.Tests\KeyFlip.Tests.csproj", "{B138B59C-0B9C-4BA7-8B44-E36CB23C3055}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CCB1B300-6765-4AC1-BB36-52A293632CEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCB1B300-6765-4AC1-BB36-52A293632CEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCB1B300-6765-4AC1-BB36-52A293632CEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCB1B300-6765-4AC1-BB36-52A293632CEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B138B59C-0B9C-4BA7-8B44-E36CB23C3055}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B138B59C-0B9C-4BA7-8B44-E36CB23C3055}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B138B59C-0B9C-4BA7-8B44-E36CB23C3055}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B138B59C-0B9C-4BA7-8B44-E36CB23C3055}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
+
