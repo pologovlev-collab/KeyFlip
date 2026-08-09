@@ -29,6 +29,40 @@ internal sealed class MixedWordDecider
         var convertedScore = _fallback.Score(converted, convertedLanguage);
         return convertedScore >= originalScore + 3;
     }
+
+    internal bool ShouldUseConvertedConservatively(
+        string original,
+        WordLanguage originalLanguage,
+        string converted,
+        WordLanguage convertedLanguage)
+    {
+        var originalScore = _fallback.Score(original, originalLanguage);
+        var convertedScore = _fallback.Score(converted, convertedLanguage);
+        return convertedScore >= originalScore + 6;
+    }
+}
+
+internal static class TechnicalTokenDetector
+{
+    private static readonly HashSet<string> ProtectedWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "std", "string", "int", "char", "bool", "void", "const", "auto", "return", "class",
+        "namespace", "public", "private", "protected", "include", "api", "url", "uri", "http",
+        "https", "html", "css", "sql", "json", "xml", "gpt"
+    };
+
+    internal static bool ShouldKeep(string text, int start, int end)
+    {
+        var word = text[start..end];
+        if (ProtectedWords.Contains(word)) return true;
+        if (word.Length >= 2 && word.All(static character => !char.IsLetter(character) || char.IsUpper(character))) return true;
+        if (word.Skip(1).Any(char.IsUpper)) return true;
+
+        var touchesIdentifierCharacter =
+            start > 0 && (text[start - 1] == '_' || char.IsDigit(text[start - 1])) ||
+            end < text.Length && (text[end] == '_' || char.IsDigit(text[end]));
+        return touchesIdentifierCharacter;
+    }
 }
 
 internal sealed class DeterministicWordLanguageScorer

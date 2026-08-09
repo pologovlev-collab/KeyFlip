@@ -57,6 +57,25 @@ public static class LayoutConverter
         return ConvertSmart(text);
     }
 
+    internal static ConversionResult ConvertCodeSafe(string text) =>
+        ConvertWords(text, forceSingleToken: false);
+
+    internal static ConversionResult ConvertWords(string text, bool forceSingleToken)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        var words = CreateWordTokens(text, preserveTechnicalTokens: true, forceSingleToken, conservative: true);
+        if (words.Count == 0) return ConversionResult.Unchanged(text);
+
+        var edits = words
+            .Where(static word => word.Direction != ConversionDirection.None)
+            .Select(word => new ConversionEdit(
+                word.Start,
+                word.End - word.Start,
+                ConvertWithMap(text[word.Start..word.End], GetMap(word.Direction))))
+            .ToArray();
+        return ConversionResult.FromEdits(text, edits);
+    }
+
     private static string ConvertSingleToken(string text)
     {
         foreach (var character in text)
@@ -71,7 +90,7 @@ public static class LayoutConverter
 
     private static string ConvertSmart(string text)
     {
-        var words = CreateWordTokens(text);
+        var words = CreateWordTokens(text, preserveTechnicalTokens: true, forceSingleToken: false, conservative: false);
         var result = new StringBuilder(text.Length);
 
         AppendLeadingSeparator(result, text[..words[0].Start], words[0].Direction);
@@ -91,7 +110,11 @@ public static class LayoutConverter
         return result.ToString();
     }
 
-    private static List<WordToken> CreateWordTokens(string text)
+    private static List<WordToken> CreateWordTokens(
+        string text,
+        bool preserveTechnicalTokens,
+        bool forceSingleToken,
+        bool conservative)
     {
         var words = new List<WordToken>();
         for (var index = 0; index < text.Length;)
@@ -112,12 +135,27 @@ public static class LayoutConverter
                 ? ConversionDirection.EnglishToRussian
                 : ConversionDirection.RussianToEnglish;
             var converted = ConvertWithMap(original, GetMap(direction));
-            if (!MixedDecider.Value.ShouldUseConverted(original, language.Value, converted, convertedLanguage))
+            var shouldConvert = conservative
+                ? MixedDecider.Value.ShouldUseConvertedConservatively(original, language.Value, converted, convertedLanguage)
+                : MixedDecider.Value.ShouldUseConverted(original, language.Value, converted, convertedLanguage);
+            if (preserveTechnicalTokens && TechnicalTokenDetector.ShouldKeep(text, start, index) || !shouldConvert)
             {
                 direction = ConversionDirection.None;
             }
 
             words.Add(new WordToken(start, index, direction));
+        }
+
+        if (forceSingleToken && words.Count == 1)
+        {
+            var word = words[0];
+            var language = GetLanguage(text[word.Start])!.Value;
+            words[0] = word with
+            {
+                Direction = language == WordLanguage.English
+                    ? ConversionDirection.EnglishToRussian
+                    : ConversionDirection.RussianToEnglish
+            };
         }
 
         return words;

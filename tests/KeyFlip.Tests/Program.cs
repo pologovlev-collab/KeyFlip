@@ -19,7 +19,11 @@ try
     focusedContextClassifierTests.Run();
     var fileNameConverterTests = new FileNameConverterTests();
     fileNameConverterTests.Run();
-    Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed}");
+    var codeSafeConversionTests = new CodeSafeConversionTests();
+    codeSafeConversionTests.Run();
+    var wordConversionTests = new WordConversionTests();
+    wordConversionTests.Run();
+    Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed + codeSafeConversionTests.Passed + wordConversionTests.Passed}");
     return 0;
 }
 catch (Exception exception)
