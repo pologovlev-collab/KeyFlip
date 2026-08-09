@@ -13,6 +13,7 @@ public sealed class KeyFlipContext : ApplicationContext
     private readonly InputSimulator _inputSimulator = new();
     private readonly ClipboardService _clipboardService = new();
     private readonly ProtectedFieldDetector _protectedFieldDetector = new();
+    private readonly FocusedContextDetector _focusedContextDetector = new();
     private readonly DiagnosticLogger _logger = new();
     private readonly SemaphoreSlim _operationGate = new(1, 1);
     private readonly HotkeyWindow _hotkeyWindow = new();
@@ -116,6 +117,21 @@ public sealed class KeyFlipContext : ApplicationContext
             {
                 _logger.Log("PROTECTED_FIELD_ABORT");
                 return;
+            }
+
+            var focusedContext = _focusedContextDetector.Detect(foregroundExecutable);
+            switch (focusedContext)
+            {
+                case FocusedTargetContext.VsCodeTerminal:
+                    _logger.Log("VSCODE_CONTEXT_TERMINAL", "process=Code.exe");
+                    _logger.Log("VSCODE_TERMINAL_ABORT", "process=Code.exe");
+                    return;
+                case FocusedTargetContext.VsCodeEditor:
+                    _logger.Log("VSCODE_CONTEXT_EDITOR", "process=Code.exe");
+                    break;
+                case FocusedTargetContext.VsCodeUnknown:
+                    _logger.Log("VSCODE_CONTEXT_UNKNOWN", "process=Code.exe");
+                    break;
             }
 
             clipboardSnapshot = await _clipboardService.CaptureSnapshotAsync(_logger, cancellation.Token);

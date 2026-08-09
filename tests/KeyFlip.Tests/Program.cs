@@ -13,4 +13,6 @@ var clipboardSnapshotTests = new ClipboardSnapshotTests();
 clipboardSnapshotTests.Run();
 var settingsServiceTests = new SettingsServiceTests();
 settingsServiceTests.Run();
-Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed}");
+var focusedContextClassifierTests = new FocusedContextClassifierTests();
+focusedContextClassifierTests.Run();
+Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + focusedContextClassifierTests.Passed}");
