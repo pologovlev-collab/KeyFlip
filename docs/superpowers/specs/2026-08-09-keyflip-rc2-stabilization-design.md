@@ -38,7 +38,7 @@ A pure filename helper is called only for a confirmed Explorer rename context. I
 
 ## Data Flow and Safety
 
-After modifier release and foreground/exclusion checks, KeyFlip evaluates the focused application context before password detection, clipboard snapshot, or Ctrl+C. A confirmed VS Code terminal returns immediately. A confirmed Explorer rename sets a local conversion mode; no UIA element is retained across asynchronous clipboard work. After Copy, normal text uses `LayoutConverter.Convert`, while a confirmed rename uses the filename helper. The existing foreground recheck, temporary clipboard, paste, restore, and synthetic-input cleanup are unchanged.
+After modifier release and foreground/exclusion checks, KeyFlip keeps the existing password guard and then evaluates the focused application context before clipboard snapshot or Ctrl+C. A confirmed VS Code terminal returns immediately. A confirmed Explorer rename sets a local conversion mode; no UIA element is retained across asynchronous clipboard work. After Copy, normal text uses `LayoutConverter.Convert`, while a confirmed rename uses the filename helper. The existing foreground recheck, temporary clipboard, paste, restore, and synthetic-input cleanup are unchanged.
 
 ## Testing
 
