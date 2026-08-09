@@ -23,10 +23,23 @@ internal sealed class LayoutConverterTests
         Converts(
             "ghbdtn rfr ltkf Xnj vyt ltkfnm! руддщ рщц фку нщг как дела",
             "привет как дела Что мне делать! hello how are you как дела");
-        Converts("Это  ghbdtn,\nhello\tруддщ!", "Это  привет,\nhello\thello!");
+        Converts("Это  ghbdtn,\nhello\tруддщ!", "Это  приветб\nhello\thello!");
         Converts("@#$^&", "\"№;:?");
         Converts("\"№;:?", "@#$^&");
         Unchanged("!!!");
+        Converts("как руддщ дела", "как hello дела");
+        Converts("руддщ рщц фку нщг", "hello how are you");
+        Converts("привет руддщ мир", "привет hello мир");
+        Converts("hello ghbdtn world", "hello привет world");
+        Unchanged("как дела");
+        Unchanged("hello world");
+        Converts("Это ghbdtn@ текст", "Это привет\" текст");
+        Converts("как руддщ№ дела", "как hello# дела");
+        Converts("ghbdtn@", "привет\"");
+        Converts("руддщ№", "hello#");
+        Converts("ghbdtn\r\n", "привет\r\n");
+        Converts("ghbdtn\nnext", "привет\nnext");
+        Converts("ghbdtn\r", "привет\r");
         CoversEveryPhysicalKeyAndRoundTrip();
     }
 

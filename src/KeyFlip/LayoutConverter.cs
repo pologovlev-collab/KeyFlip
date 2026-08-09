@@ -4,6 +4,18 @@ namespace KeyFlip;
 
 public static class LayoutConverter
 {
+    private enum ConversionDirection
+    {
+        None,
+        EnglishToRussian,
+        RussianToEnglish
+    }
+
+    private readonly record struct WordToken(
+        int Start,
+        int End,
+        ConversionDirection Direction);
+
     private const string StrongEnglishSymbols = "@#$^&";
     private const string StrongRussianSymbols = "№";
     private static readonly Lazy<MixedWordDecider> MixedDecider = new(static () => new MixedWordDecider());
@@ -39,45 +51,166 @@ public static class LayoutConverter
     {
         ArgumentNullException.ThrowIfNull(text);
 
-        var latin = 0;
-        var cyrillic = 0;
-        foreach (var character in text)
-        {
-            if (IsLatinLetter(character)) latin++;
-            else if (IsRussianLetter(character)) cyrillic++;
-        }
-
-        if (latin > 0 && cyrillic == 0) return ConvertWithMap(text, EnglishToRussian);
-        if (cyrillic > 0 && latin == 0) return ConvertWithMap(text, RussianToEnglish);
-        if (latin > 0 && cyrillic > 0) return ConvertMixed(text);
-        return ConvertSymbolOnly(text);
+        var tokenCount = CountAlphabeticTokens(text);
+        if (tokenCount == 0) return ConvertSymbolOnly(text);
+        if (tokenCount == 1) return ConvertSingleToken(text);
+        return ConvertSmart(text);
     }
 
-    private static string ConvertMixed(string text)
+    private static string ConvertSingleToken(string text)
     {
+        foreach (var character in text)
+        {
+            var language = GetLanguage(character);
+            if (language is null) continue;
+            return ConvertWithMap(text, language == WordLanguage.English ? EnglishToRussian : RussianToEnglish);
+        }
+
+        return text;
+    }
+
+    private static string ConvertSmart(string text)
+    {
+        var words = CreateWordTokens(text);
         var result = new StringBuilder(text.Length);
+
+        AppendLeadingSeparator(result, text[..words[0].Start], words[0].Direction);
+        for (var index = 0; index < words.Count; index++)
+        {
+            var word = words[index];
+            AppendWithDirection(result, text[word.Start..word.End], word.Direction);
+
+            if (index + 1 < words.Count)
+            {
+                var next = words[index + 1];
+                AppendBetweenWords(result, text[word.End..next.Start], word.Direction, next.Direction);
+            }
+        }
+
+        AppendTrailingSeparator(result, text[words[^1].End..], words[^1].Direction);
+        return result.ToString();
+    }
+
+    private static List<WordToken> CreateWordTokens(string text)
+    {
+        var words = new List<WordToken>();
         for (var index = 0; index < text.Length;)
         {
             var language = GetLanguage(text[index]);
             if (language is null)
             {
-                result.Append(text[index++]);
+                index++;
                 continue;
             }
 
             var start = index;
             while (index < text.Length && GetLanguage(text[index]) == language) index++;
+
             var original = text[start..index];
             var convertedLanguage = language == WordLanguage.English ? WordLanguage.Russian : WordLanguage.English;
-            var converted = ConvertWithMap(
-                original,
-                language == WordLanguage.English ? EnglishToRussian : RussianToEnglish);
-            result.Append(MixedDecider.Value.ShouldUseConverted(original, language.Value, converted, convertedLanguage)
-                ? converted
-                : original);
+            var direction = language == WordLanguage.English
+                ? ConversionDirection.EnglishToRussian
+                : ConversionDirection.RussianToEnglish;
+            var converted = ConvertWithMap(original, GetMap(direction));
+            if (!MixedDecider.Value.ShouldUseConverted(original, language.Value, converted, convertedLanguage))
+            {
+                direction = ConversionDirection.None;
+            }
+
+            words.Add(new WordToken(start, index, direction));
         }
 
-        return result.ToString();
+        return words;
+    }
+
+    private static int CountAlphabeticTokens(string text)
+    {
+        var count = 0;
+        for (var index = 0; index < text.Length;)
+        {
+            var language = GetLanguage(text[index]);
+            if (language is null)
+            {
+                index++;
+                continue;
+            }
+
+            count++;
+            while (index < text.Length && GetLanguage(text[index]) == language) index++;
+        }
+
+        return count;
+    }
+
+    private static void AppendLeadingSeparator(StringBuilder result, string separator, ConversionDirection nextDirection)
+    {
+        var lastWhitespace = separator.FindLastIndex(char.IsWhiteSpace);
+        result.Append(separator.AsSpan(0, lastWhitespace + 1));
+        AppendWithDirection(result, separator[(lastWhitespace + 1)..], nextDirection);
+    }
+
+    private static void AppendBetweenWords(
+        StringBuilder result,
+        string separator,
+        ConversionDirection previousDirection,
+        ConversionDirection nextDirection)
+    {
+        var firstWhitespace = separator.FindIndex(char.IsWhiteSpace);
+        if (firstWhitespace < 0)
+        {
+            AppendWithDirection(result, separator, previousDirection);
+            return;
+        }
+
+        var lastWhitespace = separator.FindLastIndex(char.IsWhiteSpace);
+        AppendWithDirection(result, separator[..firstWhitespace], previousDirection);
+        result.Append(separator.AsSpan(firstWhitespace, lastWhitespace - firstWhitespace + 1));
+        AppendWithDirection(result, separator[(lastWhitespace + 1)..], nextDirection);
+    }
+
+    private static void AppendTrailingSeparator(StringBuilder result, string separator, ConversionDirection previousDirection)
+    {
+        var firstWhitespace = separator.FindIndex(char.IsWhiteSpace);
+        if (firstWhitespace < 0)
+        {
+            AppendWithDirection(result, separator, previousDirection);
+            return;
+        }
+
+        AppendWithDirection(result, separator[..firstWhitespace], previousDirection);
+        result.Append(separator.AsSpan(firstWhitespace));
+    }
+
+    private static void AppendWithDirection(StringBuilder result, string text, ConversionDirection direction)
+    {
+        result.Append(direction == ConversionDirection.None ? text : ConvertWithMap(text, GetMap(direction)));
+    }
+
+    private static IReadOnlyDictionary<char, char> GetMap(ConversionDirection direction) => direction switch
+    {
+        ConversionDirection.EnglishToRussian => EnglishToRussian,
+        ConversionDirection.RussianToEnglish => RussianToEnglish,
+        _ => throw new ArgumentOutOfRangeException(nameof(direction))
+    };
+
+    private static int FindIndex(this string text, Func<char, bool> predicate)
+    {
+        for (var index = 0; index < text.Length; index++)
+        {
+            if (predicate(text[index])) return index;
+        }
+
+        return -1;
+    }
+
+    private static int FindLastIndex(this string text, Func<char, bool> predicate)
+    {
+        for (var index = text.Length - 1; index >= 0; index--)
+        {
+            if (predicate(text[index])) return index;
+        }
+
+        return -1;
     }
 
     private static string ConvertSymbolOnly(string text)
