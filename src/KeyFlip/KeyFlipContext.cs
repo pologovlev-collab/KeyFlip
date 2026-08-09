@@ -14,6 +14,7 @@ public sealed class KeyFlipContext : ApplicationContext
     private readonly ClipboardService _clipboardService = new();
     private readonly ProtectedFieldDetector _protectedFieldDetector = new();
     private readonly FocusedContextDetector _focusedContextDetector = new();
+    private readonly WordReplacementService _wordReplacementService = new();
     private readonly DiagnosticLogger _logger = new();
     private readonly SemaphoreSlim _operationGate = new(1, 1);
     private readonly HotkeyWindow _hotkeyWindow = new();
@@ -134,8 +135,22 @@ public sealed class KeyFlipContext : ApplicationContext
                     break;
             }
 
+            if (string.Equals(foregroundExecutable, "WINWORD.EXE", StringComparison.OrdinalIgnoreCase))
+            {
+                _wordReplacementService.TryReplaceSelection(sourceWindow, _logger);
+                return;
+            }
+
             clipboardSnapshot = await _clipboardService.CaptureSnapshotAsync(_logger, cancellation.Token);
             if (clipboardSnapshot is null) return;
+
+            if (NativeMethods.GetForegroundWindow() != sourceWindow)
+            {
+                _logger.Log("FOREGROUND_CHANGED_BEFORE_COPY");
+                clipboardSnapshot.Dispose();
+                clipboardSnapshot = null;
+                return;
+            }
 
             var copyResult = await _clipboardService.CopySelectedTextAsync(_inputSimulator, _logger, cancellation.Token);
             if (string.IsNullOrWhiteSpace(copyResult.Text))
@@ -146,9 +161,12 @@ public sealed class KeyFlipContext : ApplicationContext
 
             _logger.Log("TEXT_AVAILABLE", $"clipboardChanged={(copyResult.SequenceChanged ? "yes" : "no")}");
 
-            var converted = focusedContext == FocusedTargetContext.ExplorerFileRename
-                ? FileNameConverter.ConvertForRename(copyResult.Text)
-                : LayoutConverter.Convert(copyResult.Text);
+            var isCodeProcess = string.Equals(foregroundExecutable, "Code.exe", StringComparison.OrdinalIgnoreCase);
+            var converted = CodeLikeDetector.LooksLikeCode(copyResult.Text, isCodeProcess)
+                ? LayoutConverter.ConvertCodeSafe(copyResult.Text).OutputText
+                : focusedContext == FocusedTargetContext.ExplorerFileRename
+                    ? FileNameConverter.ConvertForRename(copyResult.Text)
+                    : LayoutConverter.Convert(copyResult.Text);
             if (!ConversionGuard.CanPaste(copyResult.Text, converted))
             {
                 _logger.Log("CONVERSION_UNCHANGED");
