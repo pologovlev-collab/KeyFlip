@@ -2,7 +2,8 @@
 
 KeyFlip is a lightweight Windows utility that fixes text typed in the wrong Russian/English keyboard layout.
 
-`ghbdtn` → `привет`  
+`ghbdtn` → `привет`
+
 `руддщ` → `hello`
 
 Select the text and press `Ctrl+Shift+K`. KeyFlip replaces the selection without changing the active Windows keyboard layout.

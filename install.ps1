@@ -1,5 +1,5 @@
 param(
-    [string]$SourceDirectory = (Join-Path $PSScriptRoot 'artifacts\KeyFlip')
+    [string]$SourceDirectory = (Join-Path $PSScriptRoot 'artifacts\KeyFlip-RC')
 )
 
 $ErrorActionPreference = 'Stop'

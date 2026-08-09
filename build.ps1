@@ -1,11 +1,14 @@
-$ErrorActionPreference = 'Stop'
+param(
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot 'artifacts\KeyFlip-RC')
+)
 
-$outputDirectory = Join-Path $PSScriptRoot 'artifacts\KeyFlip'
+$ErrorActionPreference = 'Stop'
 dotnet publish (Join-Path $PSScriptRoot 'src\KeyFlip\KeyFlip.csproj') `
     --configuration Release `
     --no-restore `
     -p:UseAppHost=true `
-    --output $outputDirectory
+    -p:UseSharedCompilation=false `
+    --output $OutputDirectory
 
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-Write-Host "Release created: $(Join-Path $outputDirectory 'KeyFlip.exe')"
+Write-Host "Release candidate created: $(Join-Path $OutputDirectory 'KeyFlip.exe')"
