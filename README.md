@@ -1,66 +1,54 @@
 # KeyFlip
 
-Lightweight Windows utility for converting selected text between Russian and English keyboard layouts.
+KeyFlip is a lightweight Windows utility that fixes text typed in the wrong Russian/English keyboard layout.
 
-KeyFlip corrects text only when you ask it to: select text, press a hotkey, and the selected text is replaced without changing the Windows keyboard layout.
+`ghbdtn` → `привет`  
+`руддщ` → `hello`
+
+Select the text and press `Ctrl+Shift+K`. KeyFlip replaces the selection without changing the active Windows keyboard layout.
 
 ## Features
 
-- RU ↔ EN selected-text conversion with default `Ctrl+Alt+K` global hotkey;
-- physical US QWERTY ↔ Russian ЙЦУКЕН mapping, including Shift and punctuation;
-- works through standard Copy/Paste, targeting browsers, VS Code, Notepad, and typical desktop editors;
-- terminal processes are excluded by default;
-- configurable hotkey and excluded executable names;
-- tray menu, autostart, and single-instance protection;
-- fully local: no AI, network, telemetry, analytics, or cloud sync.
+- Selected-text conversion with a configurable global hotkey
+- Smart mixed Russian/English selections
+- Complete physical US QWERTY ↔ Russian ЙЦУКЕН mapping
+- Shift and symbol conversion, including `@#$^&` ↔ `"№;:?`
+- Clipboard preservation for materialized text, image, file-list, stream, and common data formats
+- Tray controls and optional current-user autostart
+- Terminal processes excluded by default; `Code.exe` remains supported as an editor target
+- Fully offline: no AI, network access, telemetry, analytics, or cloud services
 
-## Usage
+Smart mixed selection uses the local Windows Spell Checking API when available, with a small deterministic fallback. Uncertain mixed-language words are kept unchanged; selections containing letters from only one script retain predictable forced conversion.
 
-1. Select text in an application.
-2. Press `Ctrl+Alt+K`.
-3. KeyFlip replaces it with the corresponding layout conversion.
+## Install
 
-Examples:
+KeyFlip requires 64-bit Windows and the .NET 8 Windows Desktop Runtime.
 
-`ghbdtn` → `привет`  
-`руддщ` → `hello`  
-`,` → `б`  
-`<` → `Б`
+1. Extract the release candidate.
+2. Run `install.ps1` from PowerShell.
+3. Select mistyped text and press `Ctrl+Shift+K`.
 
-## Installation
-
-Download the release archive, unpack it, then run `install.ps1` from PowerShell. It installs only to `%LocalAppData%\Programs\KeyFlip`, enables the current-user autostart entry, and launches KeyFlip.
-
-To remove it, run `uninstall.ps1`. It removes only KeyFlip's application folder and its own `HKCU\...\Run\KeyFlip` value.
+The installer copies KeyFlip to `%LocalAppData%\Programs\KeyFlip`, creates only its own current-user autostart value, and launches it. Run `uninstall.ps1` to remove those items.
 
 ## Build
 
-Requirements: Windows x64 and .NET 8 SDK.
+Requirements: Windows x64 and the .NET 8 SDK.
 
 ```powershell
 dotnet run --project tests\KeyFlip.Tests\KeyFlip.Tests.csproj
 .\build.ps1
 ```
 
-The Windows release is produced at `artifacts\KeyFlip\KeyFlip.exe`. It is framework-dependent and needs the .NET 8 Windows Desktop Runtime. The project deliberately does not download runtime packs during its offline build; use a machine with the `win-x64` runtime pack already installed if a self-contained single-file publish is required.
+The release candidate is written to `artifacts\KeyFlip-RC\KeyFlip.exe`. The offline build is framework-dependent and does not download runtime packs.
 
 ## Privacy
 
-KeyFlip does not send data anywhere and does not log selected text, converted text, or clipboard contents. It temporarily uses the Windows clipboard to work across applications, then attempts to restore its prior `IDataObject` (including available non-text formats).
+KeyFlip never logs or stores selected text, converted text, clipboard contents, or passwords. It uses standard Copy/Paste only as an internal transport, restores a deep materialized snapshot of the previous clipboard after success or failure, and aborts before copying when a safe snapshot cannot be made. Its temporary converted-text clipboard value is marked as excluded from Windows clipboard history, monitor processing, and cloud clipboard.
 
 ## Limitations
 
-- Elevated target applications can reject `SendInput` because of Windows UIPI.
-- Protected, password, and read-only controls may not allow copy/paste; KeyFlip does not bypass them.
-- Windows Terminal, cmd, PowerShell, WSL, and similar terminal executables are intentionally ignored.
-- Clipboard restoration relies on what the source application exposes through the standard Windows clipboard API.
-
-## Manual smoke tests
-
-- Chrome, Edge, Firefox, Яндекс Браузер: both directions in input, textarea, and contenteditable.
-- VS Code: `руддщ цщкдв` → `hello world`.
-- Notepad: both directions and multiline selection.
-- Punctuation: `, < . > @ " # № $ ; ^ : & ?`.
-- No selection: ensure no previous clipboard text is inserted.
-- Windows Terminal, PowerShell, and cmd: ensure the hotkey does nothing.
-- Clipboard preservation: copy text/image/file first, run a conversion, then check restoration.
+- The target application's own initial Copy operation may still add the original selected text to Windows clipboard history; KeyFlip cannot attach history metadata to clipboard data produced by another process.
+- Elevated applications can reject synthetic input from a non-elevated KeyFlip process because of Windows UIPI.
+- Password protection depends on the focused control exposing the standard Windows UI Automation password property. If protection is detected, KeyFlip does nothing.
+- Terminals are intentionally ignored, and read-only or non-standard editors may reject Copy/Paste.
+- Proprietary delayed clipboard formats that cannot be safely materialized cause an early abort rather than risking the existing clipboard.
