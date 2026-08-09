@@ -57,7 +57,7 @@ public sealed class KeyFlipContext : ApplicationContext
         string? error = null;
         var hotkeyReady = !_settings.Enabled ||
             _hotkeyManager.TryRegister(HotkeyConfiguration.From(_settings), out error);
-        _logger.Log("STARTUP", $"architecture={(Environment.Is64BitProcess ? "x64" : "x86")} inputSize={Marshal.SizeOf<NativeMethods.Input>()} hotkeyRegistered={(_hotkeyManager.IsRegistered ? "yes" : "no")} enabled={(_settings.Enabled ? "yes" : "no")}");
+        _logger.Log("STARTUP", $"{BuildInfo.StartupMetadata} architecture={(Environment.Is64BitProcess ? "x64" : "x86")} inputSize={Marshal.SizeOf<NativeMethods.Input>()} hotkeyRegistered={(_hotkeyManager.IsRegistered ? "yes" : "no")} enabled={(_settings.Enabled ? "yes" : "no")}");
         if (_settings.Enabled && !hotkeyReady)
         {
             _trayIcon.ShowBalloonTip(3000, "KeyFlip", $"Не удалось зарегистрировать горячую клавишу: {error}", ToolTipIcon.Warning);

@@ -6,8 +6,14 @@ internal sealed class DiagnosticLogger
 {
     private const long MaximumLogSize = 128 * 1024;
     private static readonly object Sync = new();
-    private readonly string _path = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "KeyFlip", "keyflip.log");
+    private readonly string _path;
+
+    internal DiagnosticLogger() : this(Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "KeyFlip",
+        "keyflip.log")) { }
+
+    internal DiagnosticLogger(string path) => _path = path;
 
     public void Log(string stage, string? metadata = null)
     {

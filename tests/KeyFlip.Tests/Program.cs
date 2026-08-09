@@ -25,7 +25,11 @@ try
     wordConversionTests.Run();
     var hotkeyManagerTests = new HotkeyManagerTests();
     hotkeyManagerTests.Run();
-    Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed + codeSafeConversionTests.Passed + wordConversionTests.Passed + hotkeyManagerTests.Passed}");
+    var buildInfoTests = new BuildInfoTests();
+    buildInfoTests.Run();
+    var diagnosticLoggerTests = new DiagnosticLoggerTests();
+    diagnosticLoggerTests.Run();
+    Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed + codeSafeConversionTests.Passed + wordConversionTests.Passed + hotkeyManagerTests.Passed + buildInfoTests.Passed + diagnosticLoggerTests.Passed}");
     return 0;
 }
 catch (Exception exception)

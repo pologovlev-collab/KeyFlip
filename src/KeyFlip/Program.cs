@@ -6,9 +6,17 @@ internal static class Program
     private static void Main()
     {
         using var mutex = new Mutex(initiallyOwned: true, "Local\\KeyFlip.SingleInstance", out var createdNew);
-        if (!createdNew) return;
-
         ApplicationConfiguration.Initialize();
+        if (!createdNew)
+        {
+            MessageBox.Show(
+                "KeyFlip уже запущен. Закройте текущий экземпляр через tray перед запуском другой версии.",
+                "KeyFlip",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
         Application.Run(new KeyFlipContext());
     }
 }
