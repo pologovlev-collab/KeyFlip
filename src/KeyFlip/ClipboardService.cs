@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace KeyFlip;
 
-public sealed record ClipboardCopyResult(IDataObject? OriginalClipboard, string? Text);
+public sealed record ClipboardCopyResult(bool HasOriginalClipboardSnapshot, IDataObject? OriginalClipboard, string? Text);
 
 public sealed class ClipboardService
 {
@@ -11,7 +11,7 @@ public sealed class ClipboardService
 
     public async Task<ClipboardCopyResult> CopySelectedTextAsync(InputSimulator input, CancellationToken cancellationToken)
     {
-        var originalClipboard = TryGetDataObject();
+        var (hasOriginalClipboardSnapshot, originalClipboard) = TryGetDataObject();
         var sequenceBeforeCopy = NativeMethods.GetClipboardSequenceNumber();
         input.SendCtrlKey(Keys.C);
 
@@ -21,16 +21,18 @@ public sealed class ClipboardService
             await Task.Delay(15, cancellationToken);
             if (NativeMethods.GetClipboardSequenceNumber() == sequenceBeforeCopy) continue;
 
-            return new ClipboardCopyResult(originalClipboard, TryGetUnicodeText());
+            return new ClipboardCopyResult(hasOriginalClipboardSnapshot, originalClipboard, TryGetUnicodeText());
         }
 
-        return new ClipboardCopyResult(originalClipboard, null);
+        return new ClipboardCopyResult(hasOriginalClipboardSnapshot, originalClipboard, null);
     }
 
     public async Task<bool> SetUnicodeTextAsync(string text, CancellationToken cancellationToken) =>
         await TryClipboardActionAsync(() => Clipboard.SetDataObject(new DataObject(DataFormats.UnicodeText, text), copy: true), cancellationToken);
 
-    public async Task RestoreAsync(IDataObject? originalClipboard, CancellationToken cancellationToken) =>
+    public async Task RestoreAsync(bool hasOriginalClipboardSnapshot, IDataObject? originalClipboard, CancellationToken cancellationToken)
+    {
+        if (!hasOriginalClipboardSnapshot) return;
         await TryClipboardActionAsync(
             () =>
             {
@@ -38,11 +40,12 @@ public sealed class ClipboardService
                 else Clipboard.SetDataObject(originalClipboard, copy: true);
             },
             cancellationToken);
+    }
 
-    private static IDataObject? TryGetDataObject()
+    private static (bool Success, IDataObject? Data) TryGetDataObject()
     {
-        try { return Clipboard.GetDataObject(); }
-        catch (ExternalException) { return null; }
+        try { return (true, Clipboard.GetDataObject()); }
+        catch (ExternalException) { return (false, null); }
     }
 
     private static string? TryGetUnicodeText()
@@ -77,4 +80,3 @@ public sealed class ClipboardService
         return false;
     }
 }
-

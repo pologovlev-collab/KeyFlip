@@ -96,7 +96,7 @@ public sealed class KeyFlipContext : ApplicationContext
         {
             if (copyResult is not null)
             {
-                try { await _clipboardService.RestoreAsync(copyResult.OriginalClipboard, CancellationToken.None); }
+                try { await _clipboardService.RestoreAsync(copyResult.HasOriginalClipboardSnapshot, copyResult.OriginalClipboard, CancellationToken.None); }
                 catch (Exception) { }
             }
 
