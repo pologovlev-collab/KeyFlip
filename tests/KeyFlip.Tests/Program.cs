@@ -9,4 +9,6 @@ var inputSimulatorTests = new InputSimulatorTests();
 inputSimulatorTests.Run();
 var conversionGuardTests = new ConversionGuardTests();
 conversionGuardTests.Run();
-Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed}");
+var clipboardSnapshotTests = new ClipboardSnapshotTests();
+clipboardSnapshotTests.Run();
+Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed}");

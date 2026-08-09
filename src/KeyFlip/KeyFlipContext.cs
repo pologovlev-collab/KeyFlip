@@ -84,8 +84,9 @@ public sealed class KeyFlipContext : ApplicationContext
             return;
         }
 
-        ClipboardCopyResult? copyResult = null;
+        ClipboardSnapshot? clipboardSnapshot = null;
         var operationCompleted = false;
+        var clipboardRestored = false;
         try
         {
             using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(4));
@@ -111,7 +112,10 @@ public sealed class KeyFlipContext : ApplicationContext
                 return;
             }
 
-            copyResult = await _clipboardService.CopySelectedTextAsync(_inputSimulator, _logger, cancellation.Token);
+            clipboardSnapshot = await _clipboardService.CaptureSnapshotAsync(_logger, cancellation.Token);
+            if (clipboardSnapshot is null) return;
+
+            var copyResult = await _clipboardService.CopySelectedTextAsync(_inputSimulator, _logger, cancellation.Token);
             if (string.IsNullOrWhiteSpace(copyResult.Text))
             {
                 _logger.Log("NO_TEXT", $"clipboardChanged={(copyResult.SequenceChanged ? "yes" : "no")}");
@@ -141,10 +145,12 @@ public sealed class KeyFlipContext : ApplicationContext
             }
 
             _logger.Log("PASTE_CLIPBOARD_SET");
+            _logger.Log("TEMP_CLIPBOARD_READY");
 
             _inputSimulator.SendCtrlKey(Keys.V, SendInputOperation.Paste);
             _logger.Log("PASTE_SENT");
-            await Task.Delay(250, cancellation.Token);
+            _logger.Log("SYNTHETIC_MODIFIERS_RELEASED");
+            await Task.Delay(300, cancellation.Token);
             operationCompleted = true;
         }
         catch (OperationCanceledException)
@@ -168,17 +174,17 @@ public sealed class KeyFlipContext : ApplicationContext
         }
         finally
         {
-            if (copyResult is not null)
+            if (clipboardSnapshot is not null)
             {
                 try
                 {
-                    var restored = await _clipboardService.RestoreAsync(copyResult.HasOriginalClipboardSnapshot, copyResult.OriginalClipboard, CancellationToken.None);
-                    _logger.Log(restored ? "CLIPBOARD_RESTORED" : "CLIPBOARD_RESTORE_SKIPPED");
+                    clipboardRestored = await _clipboardService.RestoreAsync(clipboardSnapshot, _logger, CancellationToken.None);
                 }
                 catch (Exception exception) { _logger.Log("CLIPBOARD_RESTORE_FAILED", $"exception={exception.GetType().Name}"); }
+                finally { clipboardSnapshot.Dispose(); }
             }
 
-            if (operationCompleted) _logger.Log("SUCCESS");
+            if (operationCompleted && clipboardRestored) _logger.Log("TRANSACTION_COMPLETE");
             _operationGate.Release();
         }
     }
