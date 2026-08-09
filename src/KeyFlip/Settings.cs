@@ -14,7 +14,7 @@ public enum HotkeyModifiers : uint
 public sealed class AppSettings
 {
     public bool Enabled { get; set; } = true;
-    public HotkeyModifiers HotkeyModifiers { get; set; } = HotkeyModifiers.Control | HotkeyModifiers.Alt;
+    public HotkeyModifiers HotkeyModifiers { get; set; } = HotkeyModifiers.Control | HotkeyModifiers.Shift;
     public int HotkeyVirtualKey { get; set; } = (int)Keys.K;
     public bool StartWithWindows { get; set; } = true;
     public List<string> ExcludedProcesses { get; set; } = ForegroundProcessService.DefaultExcludedProcesses.ToList();
@@ -33,4 +33,3 @@ public readonly record struct HotkeyConfiguration(HotkeyModifiers Modifiers, uin
 {
     public static HotkeyConfiguration From(AppSettings settings) => new(settings.HotkeyModifiers, (uint)settings.HotkeyVirtualKey);
 }
-

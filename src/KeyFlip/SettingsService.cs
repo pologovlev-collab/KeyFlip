@@ -18,7 +18,14 @@ public sealed class SettingsService
         {
             if (!File.Exists(_settingsPath)) return new AppSettings();
             var settings = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(_settingsPath));
-            return Normalize(settings);
+            settings = Normalize(settings);
+            if (MigrateLegacyDefaultHotkey(settings))
+            {
+                try { Save(settings); }
+                catch (Exception) { }
+            }
+
+            return settings;
         }
         catch (Exception)
         {
@@ -32,6 +39,18 @@ public sealed class SettingsService
         File.WriteAllText(_settingsPath, JsonSerializer.Serialize(Normalize(settings), SerializerOptions));
     }
 
+    internal static bool MigrateLegacyDefaultHotkey(AppSettings settings)
+    {
+        if (settings.HotkeyModifiers != (HotkeyModifiers.Control | HotkeyModifiers.Alt) ||
+            settings.HotkeyVirtualKey != (int)System.Windows.Forms.Keys.K)
+        {
+            return false;
+        }
+
+        settings.HotkeyModifiers = HotkeyModifiers.Control | HotkeyModifiers.Shift;
+        return true;
+    }
+
     private static AppSettings Normalize(AppSettings? settings)
     {
         settings ??= new AppSettings();
@@ -42,4 +61,3 @@ public sealed class SettingsService
         return settings;
     }
 }
-

@@ -9,7 +9,7 @@ internal sealed class NativeInteropTests
     public void Run()
     {
         InputHasNativeCompatibleSize();
-        DefaultHotkeyIsCtrlAltK();
+        DefaultHotkeyIsCtrlShiftK();
     }
 
     private void InputHasNativeCompatibleSize()
@@ -18,10 +18,10 @@ internal sealed class NativeInteropTests
         Equal(expectedSize, Marshal.SizeOf<NativeMethods.Input>());
     }
 
-    private void DefaultHotkeyIsCtrlAltK()
+    private void DefaultHotkeyIsCtrlShiftK()
     {
         var settings = new AppSettings();
-        Equal(HotkeyModifiers.Control | HotkeyModifiers.Alt, settings.HotkeyModifiers);
+        Equal(HotkeyModifiers.Control | HotkeyModifiers.Shift, settings.HotkeyModifiers);
         Equal((int)System.Windows.Forms.Keys.K, settings.HotkeyVirtualKey);
     }
 
