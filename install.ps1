@@ -13,9 +13,11 @@ if (-not (Test-Path -LiteralPath $sourceExecutable)) {
 }
 
 $runningProcesses = @(Get-Process -Name 'KeyFlip' -ErrorAction SilentlyContinue)
-if ($runningProcesses.Count -gt 0) {
-    $runningProcesses | Stop-Process -Force
-    $runningProcesses | Wait-Process -Timeout 10 -ErrorAction Stop
+foreach ($process in $runningProcesses) {
+    Stop-Process -InputObject $process -Force
+    if (-not $process.WaitForExit(10000)) {
+        throw "Existing KeyFlip process did not stop within 10 seconds."
+    }
 }
 
 New-Item -ItemType Directory -Path $installDirectory -Force | Out-Null
