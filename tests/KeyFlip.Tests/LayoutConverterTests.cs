@@ -18,6 +18,15 @@ internal sealed class LayoutConverterTests
         Unchanged("abc абв");
         Unchanged("123 🙂\n");
         Unchanged(string.Empty);
+        Converts("Это ghbdtn текст", "Это привет текст");
+        Converts("hello руддщ world", "hello hello world");
+        Converts(
+            "ghbdtn rfr ltkf Xnj vyt ltkfnm! руддщ рщц фку нщг как дела",
+            "привет как дела Что мне делать! hello how are you как дела");
+        Converts("Это  ghbdtn,\nhello\tруддщ!", "Это  привет,\nhello\thello!");
+        Converts("@#$^&", "\"№;:?");
+        Converts("\"№;:?", "@#$^&");
+        Unchanged("!!!");
         CoversEveryPhysicalKeyAndRoundTrip();
     }
 

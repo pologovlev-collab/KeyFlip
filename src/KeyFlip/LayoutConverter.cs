@@ -1,7 +1,12 @@
+using System.Text;
+
 namespace KeyFlip;
 
 public static class LayoutConverter
 {
+    private const string StrongEnglishSymbols = "@#$^&";
+    private const string StrongRussianSymbols = "№";
+    private static readonly Lazy<MixedWordDecider> MixedDecider = new(static () => new MixedWordDecider());
     private static readonly IReadOnlyDictionary<char, char> EnglishToRussian = CreateMap(
         ("`~", "ёЁ"),
         ("1!", "1!"), ("2@", "2\""), ("3#", "3№"), ("4$", "4;"), ("5%", "5%"),
@@ -42,8 +47,49 @@ public static class LayoutConverter
             else if (IsRussianLetter(character)) cyrillic++;
         }
 
-        if (latin == cyrillic) return text;
-        var map = latin > cyrillic ? EnglishToRussian : RussianToEnglish;
+        if (latin > 0 && cyrillic == 0) return ConvertWithMap(text, EnglishToRussian);
+        if (cyrillic > 0 && latin == 0) return ConvertWithMap(text, RussianToEnglish);
+        if (latin > 0 && cyrillic > 0) return ConvertMixed(text);
+        return ConvertSymbolOnly(text);
+    }
+
+    private static string ConvertMixed(string text)
+    {
+        var result = new StringBuilder(text.Length);
+        for (var index = 0; index < text.Length;)
+        {
+            var language = GetLanguage(text[index]);
+            if (language is null)
+            {
+                result.Append(text[index++]);
+                continue;
+            }
+
+            var start = index;
+            while (index < text.Length && GetLanguage(text[index]) == language) index++;
+            var original = text[start..index];
+            var convertedLanguage = language == WordLanguage.English ? WordLanguage.Russian : WordLanguage.English;
+            var converted = ConvertWithMap(
+                original,
+                language == WordLanguage.English ? EnglishToRussian : RussianToEnglish);
+            result.Append(MixedDecider.Value.ShouldUseConverted(original, language.Value, converted, convertedLanguage)
+                ? converted
+                : original);
+        }
+
+        return result.ToString();
+    }
+
+    private static string ConvertSymbolOnly(string text)
+    {
+        var englishEvidence = text.Count(character => StrongEnglishSymbols.Contains(character, StringComparison.Ordinal));
+        var russianEvidence = text.Count(character => StrongRussianSymbols.Contains(character, StringComparison.Ordinal));
+        if (englishEvidence == russianEvidence) return text;
+        return ConvertWithMap(text, englishEvidence > russianEvidence ? EnglishToRussian : RussianToEnglish);
+    }
+
+    private static string ConvertWithMap(string text, IReadOnlyDictionary<char, char> map)
+    {
         return string.Create(text.Length, (text, map), static (destination, state) =>
         {
             for (var index = 0; index < state.text.Length; index++)
@@ -53,6 +99,13 @@ public static class LayoutConverter
                     : state.text[index];
             }
         });
+    }
+
+    private static WordLanguage? GetLanguage(char character)
+    {
+        if (IsLatinLetter(character)) return WordLanguage.English;
+        if (IsRussianLetter(character)) return WordLanguage.Russian;
+        return null;
     }
 
     private static bool IsLatinLetter(char character) =>
