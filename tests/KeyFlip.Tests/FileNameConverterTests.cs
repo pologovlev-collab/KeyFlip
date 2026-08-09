@@ -14,6 +14,10 @@ internal sealed class FileNameConverterTests
         Converts("ghbdtn", "привет");
         Unchanged(".gitignore");
         Converts("ghbdtn.JPG", "привет.JPG");
+        Converts("ghbdtn.vbh.zip", "привет.мир.zip");
+        Converts("руддщ.ntcn.txt", "hello.тест.txt");
+        Unchanged("photo.JPG");
+        Converts("ghbdtn.vbh.ZIP", "привет.мир.ZIP");
     }
 
     private void Converts(string input, string expected) => Equal(expected, FileNameConverter.ConvertForRename(input));

@@ -8,7 +8,15 @@ internal static class FileNameConverter
 
         var lastDot = fileName.LastIndexOf('.');
         if (lastDot == 0) return fileName;
-        if (lastDot < 0) return LayoutConverter.Convert(fileName);
-        return LayoutConverter.Convert(fileName[..lastDot]) + fileName[lastDot..];
+        if (lastDot < 0) return ConvertBaseName(fileName);
+
+        var baseName = fileName[..lastDot];
+        return ConvertBaseName(baseName) + fileName[lastDot..];
     }
+
+    private static string ConvertBaseName(string baseName) => string.Join(
+        '.',
+        baseName.Split('.').Select(static segment => LayoutConverter.ConvertWords(
+            segment,
+            forceSingleToken: false).OutputText));
 }
