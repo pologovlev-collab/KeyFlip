@@ -11,6 +11,7 @@ public sealed class KeyFlipContext : ApplicationContext
     private readonly ForegroundProcessService _foregroundProcessService = new();
     private readonly InputSimulator _inputSimulator = new();
     private readonly ClipboardService _clipboardService = new();
+    private readonly ProtectedFieldDetector _protectedFieldDetector = new();
     private readonly DiagnosticLogger _logger = new();
     private readonly SemaphoreSlim _operationGate = new(1, 1);
     private readonly HotkeyWindow _hotkeyWindow = new();
@@ -87,7 +88,7 @@ public sealed class KeyFlipContext : ApplicationContext
         var operationCompleted = false;
         try
         {
-            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(4));
             if (!await _inputSimulator.WaitForHotkeyModifiersToReleaseAsync(cancellation.Token))
             {
                 _logger.Log("MODIFIERS_TIMEOUT");
@@ -103,10 +104,15 @@ public sealed class KeyFlipContext : ApplicationContext
                 return;
             }
 
-            _logger.Log("FOREGROUND_ACCEPTED", $"executable={foregroundExecutable}");
+            _logger.Log("FOREGROUND_ACCEPTED", $"executable={foregroundExecutable} hwnd=0x{sourceWindow.ToInt64():X}");
+            if (_protectedFieldDetector.IsFocusedControlProtected())
+            {
+                _logger.Log("PROTECTED_FIELD_ABORT");
+                return;
+            }
 
             copyResult = await _clipboardService.CopySelectedTextAsync(_inputSimulator, _logger, cancellation.Token);
-            if (string.IsNullOrEmpty(copyResult.Text))
+            if (string.IsNullOrWhiteSpace(copyResult.Text))
             {
                 _logger.Log("NO_TEXT", $"clipboardChanged={(copyResult.SequenceChanged ? "yes" : "no")}");
                 return;
@@ -115,7 +121,7 @@ public sealed class KeyFlipContext : ApplicationContext
             _logger.Log("TEXT_AVAILABLE", $"clipboardChanged={(copyResult.SequenceChanged ? "yes" : "no")}");
 
             var converted = LayoutConverter.Convert(copyResult.Text);
-            if (string.Equals(converted, copyResult.Text, StringComparison.Ordinal))
+            if (!ConversionGuard.CanPaste(copyResult.Text, converted))
             {
                 _logger.Log("CONVERSION_UNCHANGED");
                 return;
@@ -147,7 +153,14 @@ public sealed class KeyFlipContext : ApplicationContext
         }
         catch (SendInputException exception)
         {
-            _logger.Log(exception.Operation == SendInputOperation.Copy ? "COPY_SENDINPUT_FAILED" : "PASTE_SENDINPUT_FAILED", exception.ToDiagnosticMetadata());
+            var stage = exception.IsCleanup
+                ? "SYNTHETIC_CTRL_RELEASE_FAILED"
+                : exception.Operation == SendInputOperation.Copy ? "COPY_SENDINPUT_FAILED" : "PASTE_SENDINPUT_FAILED";
+            _logger.Log(stage, exception.ToDiagnosticMetadata());
+        }
+        catch (PhysicalModifierPressedException exception)
+        {
+            _logger.Log(exception.Operation == SendInputOperation.Copy ? "COPY_MODIFIER_REAPPEARED" : "PASTE_MODIFIER_REAPPEARED");
         }
         catch (Exception exception)
         {

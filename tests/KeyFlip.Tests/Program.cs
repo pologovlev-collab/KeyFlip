@@ -7,4 +7,6 @@ var nativeInteropTests = new NativeInteropTests();
 nativeInteropTests.Run();
 var inputSimulatorTests = new InputSimulatorTests();
 inputSimulatorTests.Run();
-Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed}");
+var conversionGuardTests = new ConversionGuardTests();
+conversionGuardTests.Run();
+Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed}");

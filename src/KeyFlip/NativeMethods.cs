@@ -8,8 +8,14 @@ internal static partial class NativeMethods
     internal const uint InputKeyboard = 1;
     internal const uint KeyEventKeyUp = 0x0002;
     internal const ushort VirtualKeyControl = 0x11;
-    internal const ushort VirtualKeyMenu = 0x12;
-    internal const ushort VirtualKeyShift = 0x10;
+    internal const ushort VirtualKeyLeftWindows = 0x5B;
+    internal const ushort VirtualKeyRightWindows = 0x5C;
+    internal const ushort VirtualKeyLeftShift = 0xA0;
+    internal const ushort VirtualKeyRightShift = 0xA1;
+    internal const ushort VirtualKeyLeftControl = 0xA2;
+    internal const ushort VirtualKeyRightControl = 0xA3;
+    internal const ushort VirtualKeyLeftAlt = 0xA4;
+    internal const ushort VirtualKeyRightAlt = 0xA5;
 
     [LibraryImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
