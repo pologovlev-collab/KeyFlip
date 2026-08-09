@@ -17,6 +17,7 @@ public sealed class KeyFlipContext : ApplicationContext
     private readonly SemaphoreSlim _operationGate = new(1, 1);
     private readonly HotkeyWindow _hotkeyWindow = new();
     private readonly HotkeyManager _hotkeyManager;
+    private readonly Icon _applicationIcon;
     private readonly NotifyIcon _trayIcon;
     private readonly ToolStripMenuItem _enabledItem;
     private readonly ToolStripMenuItem _autostartItem;
@@ -25,6 +26,7 @@ public sealed class KeyFlipContext : ApplicationContext
     public KeyFlipContext()
     {
         _settings = _settingsService.Load();
+        _applicationIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? (Icon)SystemIcons.Application.Clone();
         _hotkeyManager = new HotkeyManager(_hotkeyWindow.Handle);
         _hotkeyWindow.HotkeyPressed += (_, _) =>
         {
@@ -44,7 +46,7 @@ public sealed class KeyFlipContext : ApplicationContext
         menu.Items.Add(new ToolStripMenuItem("Выход", null, (_, _) => ExitThread()));
         _trayIcon = new NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = _applicationIcon,
             Text = "KeyFlip",
             ContextMenuStrip = menu,
             Visible = true
@@ -65,6 +67,7 @@ public sealed class KeyFlipContext : ApplicationContext
     {
         _trayIcon.Visible = false;
         _trayIcon.Dispose();
+        _applicationIcon.Dispose();
         _hotkeyManager.Dispose();
         _hotkeyWindow.Dispose();
         _operationGate.Dispose();
@@ -211,7 +214,7 @@ public sealed class KeyFlipContext : ApplicationContext
 
     private void ShowSettings()
     {
-        using var form = new SettingsForm(_settings, ApplySettings);
+        using var form = new SettingsForm(_settings, ApplySettings, _applicationIcon);
         form.ShowDialog();
     }
 

@@ -12,10 +12,11 @@ internal sealed class SettingsForm : Form
     private readonly CheckBox _autostart = new() { Text = "Запускать KeyFlip вместе с Windows", AutoSize = true };
     private readonly TextBox _excluded = new() { Multiline = true, ScrollBars = ScrollBars.Vertical, Height = 120, Dock = DockStyle.Fill };
 
-    public SettingsForm(AppSettings settings, Func<AppSettings, (bool Success, string? Error)> apply)
+    public SettingsForm(AppSettings settings, Func<AppSettings, (bool Success, string? Error)> apply, Icon applicationIcon)
     {
         _settings = settings.Clone();
         _apply = apply;
+        Icon = applicationIcon;
         Text = "KeyFlip — Настройки";
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
