@@ -13,6 +13,7 @@ public enum HotkeyModifiers : uint
 
 public sealed class AppSettings
 {
+    public int SettingsSchemaVersion { get; set; }
     public bool Enabled { get; set; } = true;
     public HotkeyModifiers HotkeyModifiers { get; set; } = HotkeyModifiers.Control | HotkeyModifiers.Shift;
     public int HotkeyVirtualKey { get; set; } = (int)Keys.K;
@@ -21,6 +22,7 @@ public sealed class AppSettings
 
     public AppSettings Clone() => new()
     {
+        SettingsSchemaVersion = SettingsSchemaVersion,
         Enabled = Enabled,
         HotkeyModifiers = HotkeyModifiers,
         HotkeyVirtualKey = HotkeyVirtualKey,

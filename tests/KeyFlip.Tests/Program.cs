@@ -23,7 +23,9 @@ try
     codeSafeConversionTests.Run();
     var wordConversionTests = new WordConversionTests();
     wordConversionTests.Run();
-    Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed + codeSafeConversionTests.Passed + wordConversionTests.Passed}");
+    var hotkeyManagerTests = new HotkeyManagerTests();
+    hotkeyManagerTests.Run();
+    Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed + codeSafeConversionTests.Passed + wordConversionTests.Passed + hotkeyManagerTests.Passed}");
     return 0;
 }
 catch (Exception exception)

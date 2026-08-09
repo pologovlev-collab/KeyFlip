@@ -11,22 +11,26 @@ internal sealed class SettingsServiceTests
         MigratesExactHistoricalDefault();
         KeepsCustomCtrlAltHotkey();
         KeepsCustomCtrlShiftHotkey();
+        MigrationRunsOnlyOnce();
+        ManualCtrlAltChoiceSurvivesSchemaTwo();
+        ManualCtrlAltChoiceSurvivesReload();
     }
 
     private void MigratesExactHistoricalDefault()
     {
         var settings = Create(HotkeyModifiers.Control | HotkeyModifiers.Alt, Keys.K);
 
-        True(SettingsService.MigrateLegacyDefaultHotkey(settings));
+        True(SettingsService.MigrateLegacySettings(settings));
         Equal(HotkeyModifiers.Control | HotkeyModifiers.Shift, settings.HotkeyModifiers);
         Equal((int)Keys.K, settings.HotkeyVirtualKey);
+        Equal(SettingsService.CurrentSchemaVersion, settings.SettingsSchemaVersion);
     }
 
     private void KeepsCustomCtrlAltHotkey()
     {
         var settings = Create(HotkeyModifiers.Control | HotkeyModifiers.Alt, Keys.L);
 
-        False(SettingsService.MigrateLegacyDefaultHotkey(settings));
+        True(SettingsService.MigrateLegacySettings(settings));
         Equal(HotkeyModifiers.Control | HotkeyModifiers.Alt, settings.HotkeyModifiers);
         Equal((int)Keys.L, settings.HotkeyVirtualKey);
     }
@@ -35,9 +39,50 @@ internal sealed class SettingsServiceTests
     {
         var settings = Create(HotkeyModifiers.Control | HotkeyModifiers.Shift, Keys.P);
 
-        False(SettingsService.MigrateLegacyDefaultHotkey(settings));
+        True(SettingsService.MigrateLegacySettings(settings));
         Equal(HotkeyModifiers.Control | HotkeyModifiers.Shift, settings.HotkeyModifiers);
         Equal((int)Keys.P, settings.HotkeyVirtualKey);
+    }
+
+    private void MigrationRunsOnlyOnce()
+    {
+        var settings = Create(HotkeyModifiers.Control | HotkeyModifiers.Alt, Keys.K);
+
+        True(SettingsService.MigrateLegacySettings(settings));
+        False(SettingsService.MigrateLegacySettings(settings));
+    }
+
+    private void ManualCtrlAltChoiceSurvivesSchemaTwo()
+    {
+        var settings = Create(HotkeyModifiers.Control | HotkeyModifiers.Alt, Keys.K);
+        settings.SettingsSchemaVersion = SettingsService.CurrentSchemaVersion;
+
+        False(SettingsService.MigrateLegacySettings(settings));
+        Equal(HotkeyModifiers.Control | HotkeyModifiers.Alt, settings.HotkeyModifiers);
+        Equal((int)Keys.K, settings.HotkeyVirtualKey);
+    }
+
+    private void ManualCtrlAltChoiceSurvivesReload()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "KeyFlip.Tests", Guid.NewGuid().ToString("N"));
+        var path = Path.Combine(directory, "settings.json");
+        try
+        {
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(path, "{\"HotkeyModifiers\":3,\"HotkeyVirtualKey\":75}");
+            var service = new SettingsService(path);
+            var migrated = service.Load();
+            Equal(HotkeyModifiers.Control | HotkeyModifiers.Shift, migrated.HotkeyModifiers);
+
+            migrated.HotkeyModifiers = HotkeyModifiers.Control | HotkeyModifiers.Alt;
+            service.Save(migrated);
+            var reloaded = service.Load();
+            Equal(HotkeyModifiers.Control | HotkeyModifiers.Alt, reloaded.HotkeyModifiers);
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
     }
 
     private static AppSettings Create(HotkeyModifiers modifiers, Keys key) => new()

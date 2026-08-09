@@ -54,9 +54,11 @@ public sealed class KeyFlipContext : ApplicationContext
             Visible = true
         };
 
-        var hotkeyRegistered = _hotkeyManager.TryRegister(HotkeyConfiguration.From(_settings), out var error);
-        _logger.Log("STARTUP", $"architecture={(Environment.Is64BitProcess ? "x64" : "x86")} inputSize={Marshal.SizeOf<NativeMethods.Input>()} hotkeyRegistered={(hotkeyRegistered ? "yes" : "no")}");
-        if (!hotkeyRegistered)
+        string? error = null;
+        var hotkeyReady = !_settings.Enabled ||
+            _hotkeyManager.TryRegister(HotkeyConfiguration.From(_settings), out error);
+        _logger.Log("STARTUP", $"architecture={(Environment.Is64BitProcess ? "x64" : "x86")} inputSize={Marshal.SizeOf<NativeMethods.Input>()} hotkeyRegistered={(_hotkeyManager.IsRegistered ? "yes" : "no")} enabled={(_settings.Enabled ? "yes" : "no")}");
+        if (_settings.Enabled && !hotkeyReady)
         {
             _trayIcon.ShowBalloonTip(3000, "KeyFlip", $"Не удалось зарегистрировать горячую клавишу: {error}", ToolTipIcon.Warning);
         }
@@ -256,9 +258,12 @@ public sealed class KeyFlipContext : ApplicationContext
 
     private (bool Success, string? Error) ApplySettings(AppSettings candidate)
     {
-        if (!_hotkeyManager.TryRegister(HotkeyConfiguration.From(candidate), out var hotkeyError))
+        var hotkeyApplied = candidate.Enabled
+            ? _hotkeyManager.TryRegister(HotkeyConfiguration.From(candidate), out var hotkeyError)
+            : _hotkeyManager.TryDisable(out hotkeyError);
+        if (!hotkeyApplied)
         {
-            return (false, $"Горячая клавиша занята или недоступна: {hotkeyError}");
+            return (false, $"Не удалось изменить состояние горячей клавиши: {hotkeyError}");
         }
 
         try
@@ -272,8 +277,13 @@ public sealed class KeyFlipContext : ApplicationContext
         }
         catch (Exception exception)
         {
-            _hotkeyManager.TryRegister(HotkeyConfiguration.From(_settings), out _);
-            return (false, exception.Message);
+            var rolledBack = _settings.Enabled
+                ? _hotkeyManager.TryRegister(HotkeyConfiguration.From(_settings), out var rollbackError)
+                : _hotkeyManager.TryDisable(out rollbackError);
+            var error = rolledBack
+                ? exception.Message
+                : $"{exception.Message} Горячая клавиша не восстановлена: {rollbackError}";
+            return (false, error);
         }
     }
 }
