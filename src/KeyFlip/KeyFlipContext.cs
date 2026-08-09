@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -87,6 +88,7 @@ public sealed class KeyFlipContext : ApplicationContext
         ClipboardSnapshot? clipboardSnapshot = null;
         var operationCompleted = false;
         var clipboardRestored = false;
+        var transactionTimer = Stopwatch.StartNew();
         try
         {
             using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(4));
@@ -106,6 +108,7 @@ public sealed class KeyFlipContext : ApplicationContext
             }
 
             _logger.Log("FOREGROUND_ACCEPTED", $"executable={foregroundExecutable} hwnd=0x{sourceWindow.ToInt64():X}");
+            _logger.Log("TARGET_PROCESS", $"executable={foregroundExecutable} hwnd=0x{sourceWindow.ToInt64():X}");
             if (_protectedFieldDetector.IsFocusedControlProtected())
             {
                 _logger.Log("PROTECTED_FIELD_ABORT");
@@ -185,6 +188,9 @@ public sealed class KeyFlipContext : ApplicationContext
             }
 
             if (operationCompleted && clipboardRestored) _logger.Log("TRANSACTION_COMPLETE");
+            _logger.Log(
+                "TRANSACTION_FINISHED",
+                $"success={(operationCompleted && clipboardRestored ? "yes" : "no")} elapsedMs={transactionTimer.ElapsedMilliseconds}");
             _operationGate.Release();
         }
     }

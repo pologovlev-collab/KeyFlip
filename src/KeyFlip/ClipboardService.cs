@@ -76,7 +76,7 @@ public sealed class ClipboardService
                 else Clipboard.SetDataObject(snapshot.CreateDataObject(), copy: true);
             },
             cancellationToken);
-        logger.Log(restored ? "ORIGINAL_CLIPBOARD_RESTORE_OK" : "CLIPBOARD_RESTORE_FAILED");
+        logger.Log(restored ? "ORIGINAL_CLIPBOARD_RESTORED" : "CLIPBOARD_RESTORE_FAILED");
         return restored;
     }
 
