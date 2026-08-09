@@ -33,6 +33,8 @@ The final candidate is a self-contained single-file Windows x64 executable:
 
 `artifacts\release\win-x64\KeyFlip.exe`
 
+When the verified v1.0.0 build is uploaded later, use the public asset name `KeyFlip-v1.0.0-win-x64.exe`; the local final-candidate folder intentionally keeps the executable name `KeyFlip.exe` and contains no duplicate.
+
 It includes the .NET 8 runtime, so a separate .NET Desktop Runtime installation is not required. This x64 build is for ordinary Intel/AMD 64-bit Windows machines; it is not a universal ARM64 binary.
 
 You can place `KeyFlip.exe` in a permanent folder and run it directly. This is the recommended portable setup. Put it in its permanent location before enabling autostart: the current-user Run entry points to the executable's current path and becomes invalid if the file is later moved or deleted.
