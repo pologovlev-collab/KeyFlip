@@ -15,4 +15,6 @@ var settingsServiceTests = new SettingsServiceTests();
 settingsServiceTests.Run();
 var focusedContextClassifierTests = new FocusedContextClassifierTests();
 focusedContextClassifierTests.Run();
-Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + focusedContextClassifierTests.Passed}");
+var fileNameConverterTests = new FileNameConverterTests();
+fileNameConverterTests.Run();
+Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed}");

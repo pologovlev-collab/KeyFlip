@@ -47,6 +47,11 @@ internal static class FocusedContextClassifier
         return VsCodeContext.Unknown;
     }
 
+    internal static bool IsExplorerFileRename(IReadOnlyList<UiElementDescriptor> elements) =>
+        elements.Count > 1 &&
+        elements[0].ControlKind == UiControlKind.Edit &&
+        elements.Skip(1).Any(element => element.ControlKind is UiControlKind.ListItem or UiControlKind.DataItem);
+
     private static bool HasMarker(UiElementDescriptor element, IEnumerable<string> markers) =>
         markers.Any(marker =>
             element.AutomationId.Contains(marker, StringComparison.OrdinalIgnoreCase) ||
@@ -59,7 +64,9 @@ internal sealed class FocusedContextDetector
 
     internal FocusedTargetContext Detect(string executableName)
     {
-        if (!string.Equals(executableName, "Code.exe", StringComparison.OrdinalIgnoreCase))
+        var isVsCode = string.Equals(executableName, "Code.exe", StringComparison.OrdinalIgnoreCase);
+        var isExplorer = string.Equals(executableName, "explorer.exe", StringComparison.OrdinalIgnoreCase);
+        if (!isVsCode && !isExplorer)
         {
             return FocusedTargetContext.Default;
         }
@@ -67,6 +74,13 @@ internal sealed class FocusedContextDetector
         try
         {
             var elements = CaptureFocusedElementAndAncestors();
+            if (isExplorer)
+            {
+                return FocusedContextClassifier.IsExplorerFileRename(elements)
+                    ? FocusedTargetContext.ExplorerFileRename
+                    : FocusedTargetContext.Default;
+            }
+
             return FocusedContextClassifier.ClassifyVsCode(elements) switch
             {
                 VsCodeContext.Editor => FocusedTargetContext.VsCodeEditor,
@@ -80,7 +94,7 @@ internal sealed class FocusedContextDetector
             UnauthorizedAccessException or
             COMException)
         {
-            return FocusedTargetContext.VsCodeUnknown;
+            return isVsCode ? FocusedTargetContext.VsCodeUnknown : FocusedTargetContext.Default;
         }
     }
 

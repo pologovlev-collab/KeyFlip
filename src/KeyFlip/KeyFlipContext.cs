@@ -146,7 +146,9 @@ public sealed class KeyFlipContext : ApplicationContext
 
             _logger.Log("TEXT_AVAILABLE", $"clipboardChanged={(copyResult.SequenceChanged ? "yes" : "no")}");
 
-            var converted = LayoutConverter.Convert(copyResult.Text);
+            var converted = focusedContext == FocusedTargetContext.ExplorerFileRename
+                ? FileNameConverter.ConvertForRename(copyResult.Text)
+                : LayoutConverter.Convert(copyResult.Text);
             if (!ConversionGuard.CanPaste(copyResult.Text, converted))
             {
                 _logger.Log("CONVERSION_UNCHANGED");
