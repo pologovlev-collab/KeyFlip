@@ -3,4 +3,8 @@ using KeyFlip.Tests;
 
 var tests = new LayoutConverterTests();
 tests.Run();
-Console.WriteLine($"Passed: {tests.Passed}");
+var nativeInteropTests = new NativeInteropTests();
+nativeInteropTests.Run();
+var inputSimulatorTests = new InputSimulatorTests();
+inputSimulatorTests.Run();
+Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed}");

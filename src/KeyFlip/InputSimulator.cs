@@ -3,18 +3,49 @@ using System.Windows.Forms;
 
 namespace KeyFlip;
 
-public sealed class InputSimulator
+internal enum SendInputOperation
 {
-    public async Task WaitForHotkeyModifiersToReleaseAsync(CancellationToken cancellationToken)
+    Copy,
+    Paste
+}
+
+internal sealed class SendInputException : Exception
+{
+    public SendInputException(SendInputOperation operation, uint expected, uint sent, int win32Error, int inputSize)
+        : base($"SendInput {operation} failed. Sent={sent}/{expected}, Win32Error={win32Error}, InputSize={inputSize}")
     {
-        var deadline = Environment.TickCount64 + 250;
-        while (Environment.TickCount64 < deadline && AnyModifierPressed())
-        {
-            await Task.Delay(10, cancellationToken);
-        }
+        Operation = operation;
+        Expected = expected;
+        Sent = sent;
+        Win32Error = win32Error;
+        InputSize = inputSize;
     }
 
-    public void SendCtrlKey(Keys key)
+    public SendInputOperation Operation { get; }
+    public uint Expected { get; }
+    public uint Sent { get; }
+    public int Win32Error { get; }
+    public int InputSize { get; }
+
+    public string ToDiagnosticMetadata() => $"sent={Sent}/{Expected} win32Error={Win32Error} inputSize={InputSize}";
+}
+
+public sealed class InputSimulator
+{
+    public async Task<bool> WaitForHotkeyModifiersToReleaseAsync(CancellationToken cancellationToken)
+    {
+        var deadline = Environment.TickCount64 + 1000;
+        while (AnyModifierPressed())
+        {
+            if (Environment.TickCount64 >= deadline) return false;
+            await Task.Delay(10, cancellationToken);
+        }
+
+        await Task.Delay(25, cancellationToken);
+        return true;
+    }
+
+    internal void SendCtrlKey(Keys key, SendInputOperation operation)
     {
         var virtualKey = checked((ushort)key);
         var inputs = new[]
@@ -25,10 +56,12 @@ public sealed class InputSimulator
             CreateKeyInput(NativeMethods.VirtualKeyControl, NativeMethods.KeyEventKeyUp)
         };
 
-        var sent = NativeMethods.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<NativeMethods.Input>());
+        var inputSize = Marshal.SizeOf<NativeMethods.Input>();
+        var expected = (uint)inputs.Length;
+        var sent = NativeMethods.SendInput(expected, inputs, inputSize);
         if (sent != inputs.Length)
         {
-            throw new InvalidOperationException("Windows did not accept the complete keyboard input sequence.");
+            throw new SendInputException(operation, expected, sent, Marshal.GetLastWin32Error(), inputSize);
         }
     }
 
@@ -46,4 +79,3 @@ public sealed class InputSimulator
         }
     };
 }
-

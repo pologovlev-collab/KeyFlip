@@ -12,18 +12,23 @@ public sealed class ForegroundProcessService
 
     public bool IsExcludedForegroundProcess(IEnumerable<string> excludedProcesses)
     {
+        return IsExcludedProcessName(GetForegroundExecutableName(), excludedProcesses);
+    }
+
+    public string GetForegroundExecutableName()
+    {
         var foregroundWindow = NativeMethods.GetForegroundWindow();
-        if (foregroundWindow == IntPtr.Zero) return false;
+        if (foregroundWindow == IntPtr.Zero) return "unknown";
 
         NativeMethods.GetWindowThreadProcessId(foregroundWindow, out var processId);
         try
         {
             using var process = Process.GetProcessById((int)processId);
-            return IsExcludedProcessName($"{process.ProcessName}.exe", excludedProcesses);
+            return $"{process.ProcessName}.exe";
         }
         catch (Exception)
         {
-            return false;
+            return "unknown";
         }
     }
 
@@ -31,4 +36,3 @@ public sealed class ForegroundProcessService
         excludedProcesses.Any(name => string.Equals(
             Path.GetFileName(name.Trim()), Path.GetFileName(processName.Trim()), StringComparison.OrdinalIgnoreCase));
 }
-

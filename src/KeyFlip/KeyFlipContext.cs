@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace KeyFlip;
@@ -10,6 +11,7 @@ public sealed class KeyFlipContext : ApplicationContext
     private readonly ForegroundProcessService _foregroundProcessService = new();
     private readonly InputSimulator _inputSimulator = new();
     private readonly ClipboardService _clipboardService = new();
+    private readonly DiagnosticLogger _logger = new();
     private readonly SemaphoreSlim _operationGate = new(1, 1);
     private readonly HotkeyWindow _hotkeyWindow = new();
     private readonly HotkeyManager _hotkeyManager;
@@ -22,7 +24,11 @@ public sealed class KeyFlipContext : ApplicationContext
     {
         _settings = _settingsService.Load();
         _hotkeyManager = new HotkeyManager(_hotkeyWindow.Handle);
-        _hotkeyWindow.HotkeyPressed += (_, _) => _ = ConvertSelectionAsync();
+        _hotkeyWindow.HotkeyPressed += (_, _) =>
+        {
+            _logger.Log("HOTKEY_RECEIVED");
+            _ = ConvertSelectionAsync();
+        };
 
         _enabledItem = new ToolStripMenuItem("Включено", null, (_, _) => ToggleEnabled()) { Checked = _settings.Enabled };
         _autostartItem = new ToolStripMenuItem("Автозапуск", null, (_, _) => ToggleAutostart()) { Checked = _settings.StartWithWindows };
@@ -42,13 +48,15 @@ public sealed class KeyFlipContext : ApplicationContext
             Visible = true
         };
 
-        if (!_hotkeyManager.TryRegister(HotkeyConfiguration.From(_settings), out var error))
+        var hotkeyRegistered = _hotkeyManager.TryRegister(HotkeyConfiguration.From(_settings), out var error);
+        _logger.Log("STARTUP", $"architecture={(Environment.Is64BitProcess ? "x64" : "x86")} inputSize={Marshal.SizeOf<NativeMethods.Input>()} hotkeyRegistered={(hotkeyRegistered ? "yes" : "no")}");
+        if (!hotkeyRegistered)
         {
             _trayIcon.ShowBalloonTip(3000, "KeyFlip", $"Не удалось зарегистрировать горячую клавишу: {error}", ToolTipIcon.Warning);
         }
 
         try { _startupManager.SetEnabled(_settings.StartWithWindows); }
-        catch (Exception) { }
+        catch (Exception exception) { _logger.Log("STARTUP_AUTOSTART_FAILED", $"exception={exception.GetType().Name}"); }
     }
 
     protected override void ExitThreadCore()
@@ -63,43 +71,101 @@ public sealed class KeyFlipContext : ApplicationContext
 
     private async Task ConvertSelectionAsync()
     {
-        if (!_settings.Enabled || !_operationGate.Wait(0)) return;
+        if (!_settings.Enabled)
+        {
+            _logger.Log("HOTKEY_IGNORED_DISABLED");
+            return;
+        }
+
+        if (!_operationGate.Wait(0))
+        {
+            _logger.Log("OPERATION_BUSY");
+            return;
+        }
 
         ClipboardCopyResult? copyResult = null;
+        var operationCompleted = false;
         try
         {
-            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-            await _inputSimulator.WaitForHotkeyModifiersToReleaseAsync(cancellation.Token);
-            var sourceWindow = NativeMethods.GetForegroundWindow();
-            if (_foregroundProcessService.IsExcludedForegroundProcess(_settings.ExcludedProcesses)) return;
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            if (!await _inputSimulator.WaitForHotkeyModifiersToReleaseAsync(cancellation.Token))
+            {
+                _logger.Log("MODIFIERS_TIMEOUT");
+                return;
+            }
 
-            copyResult = await _clipboardService.CopySelectedTextAsync(_inputSimulator, cancellation.Token);
-            if (string.IsNullOrEmpty(copyResult.Text)) return;
+            _logger.Log("MODIFIERS_RELEASED");
+            var sourceWindow = NativeMethods.GetForegroundWindow();
+            var foregroundExecutable = _foregroundProcessService.GetForegroundExecutableName();
+            if (sourceWindow == IntPtr.Zero || ForegroundProcessService.IsExcludedProcessName(foregroundExecutable, _settings.ExcludedProcesses))
+            {
+                _logger.Log("FOREGROUND_REJECTED", $"executable={foregroundExecutable}");
+                return;
+            }
+
+            _logger.Log("FOREGROUND_ACCEPTED", $"executable={foregroundExecutable}");
+
+            copyResult = await _clipboardService.CopySelectedTextAsync(_inputSimulator, _logger, cancellation.Token);
+            if (string.IsNullOrEmpty(copyResult.Text))
+            {
+                _logger.Log("NO_TEXT", $"clipboardChanged={(copyResult.SequenceChanged ? "yes" : "no")}");
+                return;
+            }
+
+            _logger.Log("TEXT_AVAILABLE", $"clipboardChanged={(copyResult.SequenceChanged ? "yes" : "no")}");
 
             var converted = LayoutConverter.Convert(copyResult.Text);
-            if (string.Equals(converted, copyResult.Text, StringComparison.Ordinal)) return;
-            if (sourceWindow == IntPtr.Zero || NativeMethods.GetForegroundWindow() != sourceWindow) return;
-            if (!await _clipboardService.SetUnicodeTextAsync(converted, cancellation.Token)) return;
+            if (string.Equals(converted, copyResult.Text, StringComparison.Ordinal))
+            {
+                _logger.Log("CONVERSION_UNCHANGED");
+                return;
+            }
 
-            _inputSimulator.SendCtrlKey(Keys.V);
-            await Task.Delay(125, cancellation.Token);
+            _logger.Log("CONVERSION_READY");
+            if (NativeMethods.GetForegroundWindow() != sourceWindow)
+            {
+                _logger.Log("FOREGROUND_CHANGED");
+                return;
+            }
+
+            if (!await _clipboardService.SetUnicodeTextAsync(converted, cancellation.Token))
+            {
+                _logger.Log("PASTE_CLIPBOARD_SET_FAILED");
+                return;
+            }
+
+            _logger.Log("PASTE_CLIPBOARD_SET");
+
+            _inputSimulator.SendCtrlKey(Keys.V, SendInputOperation.Paste);
+            _logger.Log("PASTE_SENT");
+            await Task.Delay(250, cancellation.Token);
+            operationCompleted = true;
         }
         catch (OperationCanceledException)
         {
-            // A timed-out conversion is intentionally ignored.
+            _logger.Log("OPERATION_TIMEOUT");
         }
-        catch (Exception)
+        catch (SendInputException exception)
         {
-            // User text and clipboard data must never be logged.
+            _logger.Log(exception.Operation == SendInputOperation.Copy ? "COPY_SENDINPUT_FAILED" : "PASTE_SENDINPUT_FAILED", exception.ToDiagnosticMetadata());
+        }
+        catch (Exception exception)
+        {
+            _logger.Log("EXCEPTION", $"exception={exception.GetType().Name}");
         }
         finally
         {
             if (copyResult is not null)
             {
-                try { await _clipboardService.RestoreAsync(copyResult.HasOriginalClipboardSnapshot, copyResult.OriginalClipboard, CancellationToken.None); }
-                catch (Exception) { }
+                try
+                {
+                    var restored = await _clipboardService.RestoreAsync(copyResult.HasOriginalClipboardSnapshot, copyResult.OriginalClipboard, CancellationToken.None);
+                    _logger.Log(restored ? "CLIPBOARD_RESTORED" : "CLIPBOARD_RESTORE_SKIPPED");
+                }
+                catch (Exception exception) { _logger.Log("CLIPBOARD_RESTORE_FAILED", $"exception={exception.GetType().Name}"); }
             }
 
+            if (operationCompleted) _logger.Log("SUCCESS");
             _operationGate.Release();
         }
     }
