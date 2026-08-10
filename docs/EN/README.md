@@ -2,29 +2,27 @@
 
 # KeyFlip
 
-A small Windows utility that fixes selected text typed using the wrong Russian or English keyboard layout.
+[![CI](https://github.com/pologovlev-collab/KeyFlip/actions/workflows/ci.yml/badge.svg)](https://github.com/pologovlev-collab/KeyFlip/actions/workflows/ci.yml)
+[![Windows 10/11 x64](https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-0078D4?logo=windows)](https://github.com/pologovlev-collab/KeyFlip/releases)
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](../../LICENSE)
 
-`ghbdtn` → `привет`<br>
-`руддщ` → `hello`
+KeyFlip is a small free Windows utility that fixes selected text typed using the wrong Russian or English keyboard layout.
 
-Default hotkey: `Ctrl + Shift + K`.
+`ghbdtn` → `привет` · `руддщ` → `hello`
 
-## 🚀 Download
+Select text and press `Ctrl + Shift + K`. Everything runs locally and offline, with no AI, account, telemetry, or text sent over the internet.
+
+![KeyFlip fixes text typed in the wrong layout](../../assets/readme/keyflip-demo.png)
+
+## Download
 
 | System | Architecture | Download | Status |
 |---|---:|---|---|
-| Windows 10 / 11 | x64 | `KeyFlip_windows_x64.exe` | Stable |
-| Windows 10 / 11 | ARM64 | — | Planned / not tested |
+| Windows 10 / 11 | x64 | **[KeyFlip_windows_x64.exe](https://github.com/pologovlev-collab/KeyFlip/releases/latest/download/KeyFlip_windows_x64.exe)** | Stable |
+| Windows 10 / 11 | ARM64 | — | Planned |
+| Linux / macOS | — | — | Not supported |
 
-The public GitHub release does not exist yet, so this README intentionally contains no dead download link. After publication, the stable direct URL will be:
-
-```text
-https://github.com/<OWNER>/KeyFlip/releases/latest/download/KeyFlip_windows_x64.exe
-```
-
-All releases: `https://github.com/<OWNER>/KeyFlip/releases`. Replace `<OWNER>` with the real repository owner during publication.
-
-The release is one portable executable and requires no separate .NET installation. Download `SHA256SUMS.txt` from the same release and verify the SHA-256 checksum.
+The release is a portable single-file EXE with the .NET runtime included. Download [SHA256SUMS.txt](https://github.com/pologovlev-collab/KeyFlip/releases/latest/download/SHA256SUMS.txt) from the same release to verify it. [View all releases](https://github.com/pologovlev-collab/KeyFlip/releases).
 
 ## Quick start
 
@@ -32,9 +30,11 @@ The release is one portable executable and requires no separate .NET installatio
 2. Put it in a permanent folder and run it.
 3. Select text in a supported application.
 4. Press `Ctrl + Shift + K`.
-5. Manage KeyFlip, the hotkey, and autostart from its system tray icon.
+5. Configure the hotkey and autostart from the KeyFlip system tray icon.
 
-When autostart is enabled, KeyFlip refreshes the startup entry with the EXE's current path. After moving the portable file, launch it manually once.
+After moving the portable EXE, launch it manually once so KeyFlip can refresh its autostart path.
+
+![KeyFlip settings](../../assets/readme/keyflip-settings.png)
 
 ## Examples
 
@@ -42,73 +42,66 @@ When autostart is enabled, KeyFlip refreshes the startup entry with the EXE's cu
 ghbdtn
 → привет
 
-Это ghbdtn текст
-→ Это привет текст
+This is a руддщ example
+→ This is a hello example
 
 как руддщ дела
 → как hello дела
 
-GHBDTN RFR LTKF
-→ ПРИВЕТ КАК ДЕЛА
-
 std::string text = "руддщ";
 → std::string text = "hello";
 
-зкште (ЭруддщЭ)ж
-→ print ("hello");
+зкште(ЭруддщЭ)
+→ print("hello")
 
-ghbdtn vbh.zip
-→ привет мир.zip
+ghbdtn   vbh file.txt
+→ привет   мир file.txt
 ```
 
 ## Features
 
 - Smart per-word Russian ↔ English conversion.
 - Complete physical US QWERTY ↔ Russian ЙЦУКЕН mapping, including Shift and symbols.
-- Code-aware mode that preserves existing syntax and converts confidently recognized wrong-layout syntax.
+- Code-aware conversion that preserves valid syntax and fixes confidently recognized wrong-layout syntax.
 - Formatting and paragraph preservation in Microsoft Word.
-- File Explorer filename conversion with final-extension preservation.
-- Configurable global hotkey, system tray, and Windows autostart.
+- File Explorer filename conversion with exact whitespace and final-extension preservation.
+- Configurable global hotkey, system tray controls, and Windows autostart.
 - Protected-field and terminal exclusion.
-- Clipboard snapshot and restoration safeguards.
-- Fully local and offline operation with no AI, telemetry, or analytics.
+- Clipboard snapshot and safe restoration.
+- Fully local and offline operation with no network features.
 
 ## How it works
 
-A selection containing one alphabetic token uses forced physical-layout conversion. Multi-word selections use conservative per-word decisions based on local Windows spell checking and deterministic rules. Spaces, tabs, and line endings are preserved exactly.
+A selection containing one alphabetic token uses direct physical-layout conversion. Known technical acronyms such as `SQL`, `API`, and `HTTP` are protected from accidental conversion. Selections with two or more words use conservative per-word decisions. Spaces, tabs, and line endings are preserved exactly; punctuation attached to a converted word follows the same direction.
 
-In code contexts, KeyFlip first builds a safe candidate that preserves existing ASCII punctuation. An additional candidate starts from that safe result and changes only confirmed syntax positions: wrong-layout quote delimiters and a terminator after a closing bracket or confirmed closing quote. Legitimate Cyrillic content inside existing ASCII quotes remains untouched. Ambiguous input keeps the safe candidate. A confirmed VS Code integrated terminal aborts before Copy or any clipboard modification.
+The normal operation is: protected-context check → clipboard snapshot → Copy → conversion → Paste → clipboard restoration. A confirmed VS Code Integrated Terminal aborts before `Ctrl+C` or any clipboard change; the editor and an unknown `Code.exe` context continue normally.
 
-Microsoft Word uses targeted Range replacements instead of replacing the complete selection. In File Explorer, a confirmed rename context uses filename policy and preserves the final extension.
+In code contexts, KeyFlip first creates a safe candidate that preserves existing ASCII punctuation. Wrong-layout quotes and other syntax positions change only when code indicators are strong. Microsoft Word uses targeted Range replacements, while a confirmed File Explorer rename context uses a separate filename policy that preserves the final extension.
 
-## Supported systems
+## Compatibility
 
 | System | Support |
 |---|---|
 | Windows 10 x64 | Yes |
 | Windows 11 x64 | Yes |
-| Windows 10 / 11 ARM64 | Planned and not tested; no native ARM64 build |
+| Windows 10 / 11 ARM64 | Planned; no native ARM64 build yet |
 | Windows 7 | No — the current build uses .NET 8 |
 | Linux / macOS | No — the application depends on WinForms, Win32, COM, and UI Automation |
 
-The same self-contained x64 release targets both Windows 10 and Windows 11 x64.
+## Security and privacy
 
-## Security
+KeyFlip does not send text anywhere, use AI, collect telemetry, require an account or internet access, or persist selected text. Diagnostic logs contain only safe operation stages, version data, and context classifications—never selected text, terminal commands, or clipboard contents.
 
-KeyFlip's source is available for inspection, and the application operates entirely on the local computer. An unsigned executable may trigger Windows SmartScreen or antivirus warnings. Do not disable security software or add an unknown file to exclusions. Download KeyFlip only from the official GitHub release, verify its SHA-256 checksum, or build it yourself from source.
-
-## Privacy
-
-KeyFlip does not send text anywhere, use AI, collect telemetry, require an account or internet connection, or persist selected text. Diagnostic logs contain only safe operation stages, version data, and context classifications—never selected text, terminal commands, or clipboard contents.
+The EXE is not code-signed yet, so Windows SmartScreen or antivirus software may show a warning. Do not disable protection: download only from the [official release](https://github.com/pologovlev-collab/KeyFlip/releases), verify SHA-256, or build from source.
 
 ## Known limitations
 
-- Elevated applications may reject synthetic input because of Windows security boundaries.
-- Password fields and terminals are intentionally ignored.
-- KeyFlip safely aborts if a rare or unsupported clipboard format could not be preserved.
+- Elevated applications may reject synthetic input due to Windows security boundaries.
+- Password fields and confirmed terminals are intentionally ignored.
+- KeyFlip safely aborts when a rare unsupported clipboard format cannot be preserved.
 - Mixed formatting inside one individual Microsoft Word word may become uniform.
 - Unusual Word add-ins and custom hosts may not provide a safe automation context.
-- A folder name containing a dot may not be recognized by the conservative Explorer fallback; confirmed rename context is handled separately.
+- Unusual punctuation typed entirely in the wrong layout may remain unchanged in an ambiguous context.
 
 ## Build from source
 
@@ -118,11 +111,6 @@ Requirements: Windows and the .NET 8 SDK.
 .\build.ps1
 ```
 
-The script restores dependencies, builds Release, runs every automated check, and creates the self-contained single-file win-x64 release in `artifacts\release\win-x64`:
+The script restores dependencies, builds Release, runs all automated tests, and creates a self-contained single-file win-x64 release under `artifacts\release\win-x64`.
 
-```text
-KeyFlip_windows_x64.exe
-SHA256SUMS.txt
-```
-
-See [docs/ARCHITECTURE.md](../ARCHITECTURE.md) for the technical overview and [RELEASE_NOTES.md](../../RELEASE_NOTES.md) for the v1.0.0 release text.
+See [docs/ARCHITECTURE.md](../ARCHITECTURE.md) for the technical overview, [CONTRIBUTING.md](../../CONTRIBUTING.md) to contribute, and the [MIT License](../../LICENSE).

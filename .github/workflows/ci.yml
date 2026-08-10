@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore application
+        run: dotnet restore src/KeyFlip/KeyFlip.csproj --runtime win-x64 --disable-parallel -p:NuGetAudit=false
+
+      - name: Restore tests
+        run: dotnet restore tests/KeyFlip.Tests/KeyFlip.Tests.csproj --runtime win-x64 --disable-parallel -p:NuGetAudit=false
+
+      - name: Build
+        run: dotnet build KeyFlip.sln --configuration Release --no-restore -m:1 -p:UseSharedCompilation=false
+
+      - name: Run tests
+        run: dotnet run --project tests/KeyFlip.Tests/KeyFlip.Tests.csproj --configuration Release --no-build --no-restore
