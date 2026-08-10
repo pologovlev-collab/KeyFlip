@@ -57,6 +57,7 @@ internal static class TechnicalTokenDetector
     internal static bool ShouldKeep(string text, int start, int end, bool protectIdentifierFragments = true)
     {
         var word = text[start..end];
+        if (word.Length == 1) return true;
         if (IsKnownProtectedWord(word)) return true;
         if (word.Any(char.IsLower) && word.Skip(1).Any(char.IsUpper)) return true;
 
