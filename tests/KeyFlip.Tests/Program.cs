@@ -15,6 +15,8 @@ try
     clipboardSnapshotTests.Run();
     var settingsServiceTests = new SettingsServiceTests();
     settingsServiceTests.Run();
+    var startupManagerTests = new StartupManagerTests();
+    startupManagerTests.Run();
     var focusedContextClassifierTests = new FocusedContextClassifierTests();
     focusedContextClassifierTests.Run();
     var fileNameConverterTests = new FileNameConverterTests();
@@ -29,7 +31,7 @@ try
     buildInfoTests.Run();
     var diagnosticLoggerTests = new DiagnosticLoggerTests();
     diagnosticLoggerTests.Run();
-    Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed + codeSafeConversionTests.Passed + wordConversionTests.Passed + hotkeyManagerTests.Passed + buildInfoTests.Passed + diagnosticLoggerTests.Passed}");
+    Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + startupManagerTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed + codeSafeConversionTests.Passed + wordConversionTests.Passed + hotkeyManagerTests.Passed + buildInfoTests.Passed + diagnosticLoggerTests.Passed}");
     return 0;
 }
 catch (Exception exception)

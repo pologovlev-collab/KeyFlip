@@ -15,6 +15,7 @@ internal sealed class FileNameConverterTests
         Unchanged(".gitignore");
         Converts("ghbdtn.JPG", "привет.JPG");
         Converts("ghbdtn.vbh.zip", "привет.мир.zip");
+        Converts("ghbdtn vbh.zip", "привет мир.zip");
         Converts("руддщ.ntcn.txt", "hello.тест.txt");
         Unchanged("photo.JPG");
         Converts("ghbdtn.vbh.ZIP", "привет.мир.ZIP");

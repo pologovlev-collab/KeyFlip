@@ -60,6 +60,19 @@ public static class LayoutConverter
     internal static ConversionResult ConvertCodeSafe(string text) =>
         ConvertWords(text, forceSingleToken: false);
 
+    internal static ConversionResult ConvertCodeAware(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        var safeCandidate = ConvertCodeSafe(text);
+        var fullCandidateText = ConvertCyrillicPhysicalPreservingAscii(text);
+        if (!CodeLikeDetector.StronglyPrefersFullCandidate(safeCandidate.OutputText, fullCandidateText))
+        {
+            return safeCandidate;
+        }
+
+        return ConversionResult.FromCharacterDifferences(text, fullCandidateText);
+    }
+
     internal static ConversionResult ConvertTargeted(string text, bool forceSingleToken)
     {
         ArgumentNullException.ThrowIfNull(text);
@@ -286,6 +299,21 @@ public static class LayoutConverter
                 destination[index] = state.map.TryGetValue(state.text[index], out var converted)
                     ? converted
                     : state.text[index];
+            }
+        });
+    }
+
+    private static string ConvertCyrillicPhysicalPreservingAscii(string text)
+    {
+        return string.Create(text.Length, text, static (destination, source) =>
+        {
+            for (var index = 0; index < source.Length; index++)
+            {
+                var character = source[index];
+                destination[index] = IsRussianLetter(character) &&
+                    RussianToEnglish.TryGetValue(character, out var converted)
+                        ? converted
+                        : character;
             }
         });
     }

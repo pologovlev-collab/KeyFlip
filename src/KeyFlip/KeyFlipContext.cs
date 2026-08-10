@@ -180,7 +180,7 @@ public sealed class KeyFlipContext : ApplicationContext
                 FileNameFallbackClassifier.IsLikelyFileName(copyResult.Text);
             if (useFilenameFallback) _logger.Log("EXPLORER_CONTEXT_FILENAME_FALLBACK");
             var converted = CodeLikeDetector.LooksLikeCode(copyResult.Text, isCodeProcess)
-                ? LayoutConverter.ConvertCodeSafe(copyResult.Text).OutputText
+                ? LayoutConverter.ConvertCodeAware(copyResult.Text).OutputText
                 : focusedContext == FocusedTargetContext.ExplorerFileRename || useFilenameFallback
                     ? FileNameConverter.ConvertForRename(copyResult.Text)
                     : LayoutConverter.Convert(copyResult.Text);

@@ -14,12 +14,21 @@ public sealed class StartupManager
 
         if (enabled)
         {
-            key.SetValue(ValueName, $"\"{Application.ExecutablePath}\"");
+            key.SetValue(ValueName, BuildStartupCommand(Environment.ProcessPath));
         }
         else
         {
             key.DeleteValue(ValueName, throwOnMissingValue: false);
         }
     }
-}
 
+    internal static string BuildStartupCommand(string? processPath)
+    {
+        if (string.IsNullOrWhiteSpace(processPath))
+        {
+            throw new InvalidOperationException("Unable to determine the current executable path.");
+        }
+
+        return $"\"{processPath}\"";
+    }
+}
