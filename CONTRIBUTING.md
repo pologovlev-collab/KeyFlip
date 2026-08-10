@@ -21,7 +21,7 @@ dotnet build KeyFlip.sln -c Release --no-restore
 dotnet run --project tests/KeyFlip.Tests/KeyFlip.Tests.csproj -c Release --no-build --no-restore
 ```
 
-For a complete release build, including the standalone executable and checksum:
+For a complete release build:
 
 ```powershell
 .\build.ps1

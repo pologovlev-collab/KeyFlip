@@ -22,7 +22,7 @@ Select text and press `Ctrl + Shift + K`. Everything runs locally and offline, w
 | Windows 10 / 11 | ARM64 | — | Planned |
 | Linux / macOS | — | — | Not supported |
 
-The release is a portable single-file EXE with the .NET runtime included. Download [SHA256SUMS.txt](https://github.com/pologovlev-collab/KeyFlip/releases/latest/download/SHA256SUMS.txt) from the same release to verify it. [View all releases](https://github.com/pologovlev-collab/KeyFlip/releases).
+The release is a portable single-file EXE with the .NET runtime included. [View all releases](https://github.com/pologovlev-collab/KeyFlip/releases).
 
 ## Quick start
 
@@ -93,6 +93,12 @@ In code contexts, KeyFlip first creates a safe candidate that preserves existing
 KeyFlip does not send text anywhere, use AI, collect telemetry, require an account or internet access, or persist selected text. Diagnostic logs contain only safe operation stages, version data, and context classifications—never selected text, terminal commands, or clipboard contents.
 
 The EXE is not code-signed yet, so Windows SmartScreen or antivirus software may show a warning. Do not disable protection: download only from the [official release](https://github.com/pologovlev-collab/KeyFlip/releases), verify SHA-256, or build from source.
+
+SHA-256 for `KeyFlip_windows_x64.exe` version 1.0.0:
+
+```text
+963631ECF8C2FE0A7ACC47779AC0D72ACE76B2E5D4EB634AC6F910A075AC0AC0
+```
 
 ## Known limitations
 

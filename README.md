@@ -22,7 +22,7 @@ KeyFlip — небольшая бесплатная Windows-утилита дл�
 | Windows 10 / 11 | ARM64 | — | Planned |
 | Linux / macOS | — | — | Не поддерживается |
 
-Это portable single-file EXE со встроенным .NET runtime: установка .NET отдельно не нужна. Для проверки загрузите [SHA256SUMS.txt](https://github.com/pologovlev-collab/KeyFlip/releases/latest/download/SHA256SUMS.txt) из того же релиза. [Все версии](https://github.com/pologovlev-collab/KeyFlip/releases).
+Это portable single-file EXE со встроенным .NET runtime: установка .NET отдельно не нужна. [Все версии](https://github.com/pologovlev-collab/KeyFlip/releases).
 
 ## Быстрый старт
 
@@ -93,6 +93,12 @@ ghbdtn   vbh file.txt
 KeyFlip не отправляет текст, не использует AI, не собирает телеметрию, не требует аккаунт или интернет и не сохраняет выделенный текст. Диагностический журнал содержит только безопасные стадии операции, версию и классификацию контекста — без текста, команд терминала и содержимого буфера обмена.
 
 EXE пока не подписан цифровой подписью, поэтому Windows SmartScreen или антивирус могут показать предупреждение. Не отключайте защиту: скачивайте файл только из [официального релиза](https://github.com/pologovlev-collab/KeyFlip/releases), сверяйте SHA-256 или собирайте приложение самостоятельно.
+
+SHA-256 для `KeyFlip_windows_x64.exe` версии 1.0.0:
+
+```text
+963631ECF8C2FE0A7ACC47779AC0D72ACE76B2E5D4EB634AC6F910A075AC0AC0
+```
 
 ## Известные ограничения
 
