@@ -14,6 +14,8 @@ internal sealed class SettingsServiceTests
         MigrationRunsOnlyOnce();
         ManualCtrlAltChoiceSurvivesSchemaTwo();
         ManualCtrlAltChoiceSurvivesReload();
+        InvalidHotkeyValuesFallBackToDefaults();
+        CorruptedJsonFallsBackToDefaults();
     }
 
     private void MigratesExactHistoricalDefault()
@@ -78,6 +80,38 @@ internal sealed class SettingsServiceTests
             service.Save(migrated);
             var reloaded = service.Load();
             Equal(HotkeyModifiers.Control | HotkeyModifiers.Alt, reloaded.HotkeyModifiers);
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    private void InvalidHotkeyValuesFallBackToDefaults()
+    {
+        var settings = LoadFromJson("{\"SettingsSchemaVersion\":2,\"HotkeyModifiers\":4294967295,\"HotkeyVirtualKey\":999}");
+
+        Equal(HotkeyModifiers.Control | HotkeyModifiers.Shift, settings.HotkeyModifiers);
+        Equal((int)Keys.K, settings.HotkeyVirtualKey);
+    }
+
+    private void CorruptedJsonFallsBackToDefaults()
+    {
+        var settings = LoadFromJson("{broken json");
+
+        Equal(HotkeyModifiers.Control | HotkeyModifiers.Shift, settings.HotkeyModifiers);
+        Equal((int)Keys.K, settings.HotkeyVirtualKey);
+    }
+
+    private static AppSettings LoadFromJson(string json)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "KeyFlip.Tests", Guid.NewGuid().ToString("N"));
+        var path = Path.Combine(directory, "settings.json");
+        try
+        {
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(path, json);
+            return new SettingsService(path).Load();
         }
         finally
         {

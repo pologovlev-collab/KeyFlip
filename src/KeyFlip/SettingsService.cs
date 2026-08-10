@@ -5,6 +5,8 @@ namespace KeyFlip;
 public sealed class SettingsService
 {
     internal const int CurrentSchemaVersion = 2;
+    private const HotkeyModifiers DefaultModifiers = HotkeyModifiers.Control | HotkeyModifiers.Shift;
+    private const int DefaultVirtualKey = (int)System.Windows.Forms.Keys.K;
     private static readonly JsonSerializerOptions SerializerOptions = new() { WriteIndented = true };
     private readonly string _settingsPath;
 
@@ -60,12 +62,25 @@ public sealed class SettingsService
     private static AppSettings Normalize(AppSettings? settings)
     {
         settings ??= CreateDefaults();
+        if (!IsSupportedModifiers(settings.HotkeyModifiers)) settings.HotkeyModifiers = DefaultModifiers;
+        if (!IsSupportedVirtualKey(settings.HotkeyVirtualKey)) settings.HotkeyVirtualKey = DefaultVirtualKey;
         settings.ExcludedProcesses = (settings.ExcludedProcesses ?? new List<string>())
             .Where(static name => !string.IsNullOrWhiteSpace(name))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
         return settings;
     }
+
+    private static bool IsSupportedModifiers(HotkeyModifiers modifiers) => modifiers is
+        HotkeyModifiers.Control or
+        (HotkeyModifiers.Control | HotkeyModifiers.Alt) or
+        (HotkeyModifiers.Control | HotkeyModifiers.Shift) or
+        (HotkeyModifiers.Alt | HotkeyModifiers.Shift) or
+        (HotkeyModifiers.Control | HotkeyModifiers.Alt | HotkeyModifiers.Shift);
+
+    private static bool IsSupportedVirtualKey(int virtualKey) =>
+        virtualKey is >= (int)System.Windows.Forms.Keys.A and <= (int)System.Windows.Forms.Keys.Z or
+        >= (int)System.Windows.Forms.Keys.D0 and <= (int)System.Windows.Forms.Keys.D9;
 
     private static AppSettings CreateDefaults() => new() { SettingsSchemaVersion = CurrentSchemaVersion };
 }
