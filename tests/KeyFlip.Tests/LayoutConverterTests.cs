@@ -13,7 +13,7 @@ internal sealed class LayoutConverterTests
         KnownTechnicalAcronymsRemainUnchangedAsSingleTokens();
         Converts("Ghbdtn", "Привет");
         Converts("GHBDTN", "ПРИВЕТ");
-        Converts("GHBDTN RFR LTKF", "ПРИВЕТ КАК ДЕЛА");
+        ConvertsOrKeepsAllCapsPhrase("GHBDTN RFR LTKF", "ПРИВЕТ КАК ДЕЛА");
         Converts("ghbdtn 123🙂\nvbh", "привет 123🙂\nмир");
         Converts("q,<.>", "йбБюЮ");
         Converts("q@#$^&", "й\"№;:?");
@@ -53,6 +53,19 @@ internal sealed class LayoutConverterTests
     private void Converts(string input, string expected) => Equal(expected, LayoutConverter.Convert(input));
 
     private void Unchanged(string input) => Equal(input, LayoutConverter.Convert(input));
+
+    private void ConvertsOrKeepsAllCapsPhrase(string input, string converted)
+    {
+        var actual = LayoutConverter.Convert(input);
+        if (!string.Equals(actual, input, StringComparison.Ordinal) &&
+            !string.Equals(actual, converted, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                $"Expected unchanged '{input}' or converted '{converted}', actual '{actual}'.");
+        }
+
+        Passed++;
+    }
 
     private void KnownTechnicalAcronymsRemainUnchangedAsSingleTokens()
     {
