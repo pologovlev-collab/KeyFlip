@@ -8,9 +8,9 @@ internal sealed class BuildInfoTests
 
     public void Run()
     {
-        Equal("1.0.0-rc-final", BuildInfo.Version);
+        Equal("1.0.0", BuildInfo.Version);
         True(Path.IsPathFullyQualified(BuildInfo.ProcessPath));
-        True(BuildInfo.StartupMetadata.Contains("version=1.0.0-rc-final", StringComparison.Ordinal));
+        True(BuildInfo.StartupMetadata.Contains("version=1.0.0", StringComparison.Ordinal));
         True(BuildInfo.StartupMetadata.Contains($"path={BuildInfo.ProcessPath}", StringComparison.Ordinal));
     }
 

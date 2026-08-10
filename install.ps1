@@ -3,8 +3,9 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$executableName = 'KeyFlip.exe'
-$sourceExecutable = Join-Path $SourceDirectory $executableName
+$releaseAssetName = 'KeyFlip-v1.0.0-win-x64.exe'
+$installedExecutableName = 'KeyFlip.exe'
+$sourceExecutable = Join-Path $SourceDirectory $releaseAssetName
 $installDirectory = Join-Path $env:LOCALAPPDATA 'Programs\KeyFlip'
 $runKeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
 
@@ -21,7 +22,7 @@ foreach ($process in $runningProcesses) {
 }
 
 New-Item -ItemType Directory -Path $installDirectory -Force | Out-Null
-Copy-Item -LiteralPath $sourceExecutable -Destination $installDirectory -Force
-$installedExecutable = Join-Path $installDirectory $executableName
+Copy-Item -LiteralPath $sourceExecutable -Destination (Join-Path $installDirectory $installedExecutableName) -Force
+$installedExecutable = Join-Path $installDirectory $installedExecutableName
 Set-ItemProperty -Path $runKeyPath -Name 'KeyFlip' -Value "`"$installedExecutable`""
 Start-Process -FilePath $installedExecutable -WindowStyle Hidden
