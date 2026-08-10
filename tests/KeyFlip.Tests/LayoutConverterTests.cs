@@ -10,6 +10,7 @@ internal sealed class LayoutConverterTests
     {
         Converts("ghbdtn", "привет");
         Converts("руддщ", "hello");
+        KnownTechnicalAcronymsRemainUnchangedAsSingleTokens();
         Converts("Ghbdtn", "Привет");
         Converts("GHBDTN", "ПРИВЕТ");
         Converts("GHBDTN RFR LTKF", "ПРИВЕТ КАК ДЕЛА");
@@ -52,6 +53,22 @@ internal sealed class LayoutConverterTests
     private void Converts(string input, string expected) => Equal(expected, LayoutConverter.Convert(input));
 
     private void Unchanged(string input) => Equal(input, LayoutConverter.Convert(input));
+
+    private void KnownTechnicalAcronymsRemainUnchangedAsSingleTokens()
+    {
+        var acronyms = new[]
+        {
+            "SQL", "API", "HTTP", "HTTPS", "HTML", "CSS", "JSON", "XML", "URL", "URI",
+            "CPU", "GPU", "RAM", "SSD", "HDD", "IDE", "CLI", "SDK", "SSH", "SSL", "TLS",
+            "TCP", "UDP", "IP", "DNS", "UUID", "GUID", "REST", "RPC", "JWT", "UTF", "ASCII",
+            "UI", "UX", "GPT"
+        };
+
+        foreach (var acronym in acronyms) Unchanged(acronym);
+        Unchanged("sql");
+        Unchanged("Api");
+        Unchanged("https");
+    }
 
     private void Equal(string expected, string actual)
     {

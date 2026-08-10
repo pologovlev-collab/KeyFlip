@@ -9,6 +9,7 @@ internal sealed class WordConversionTests
     public void Run()
     {
         SingleWrongLayoutWordProducesOneEdit();
+        KnownTechnicalAcronymProducesNoEdit();
         AttachedEnglishPunctuationFollowsConvertedWord();
         AttachedRussianPunctuationFollowsConvertedWord();
         SymbolOnlySelectionProducesTargetedEdits();
@@ -46,6 +47,14 @@ internal sealed class WordConversionTests
 
         Equal("hello", result.OutputText);
         Edit(new ConversionEdit(0, 5, "hello"), result.Edits.Single());
+    }
+
+    private void KnownTechnicalAcronymProducesNoEdit()
+    {
+        var result = WordEditPlanner.Create("SQL");
+
+        Equal("SQL", result.OutputText);
+        Equal(0, result.Edits.Count);
     }
 
     private void FormattedSelectionChangesOnlyWrongToken()

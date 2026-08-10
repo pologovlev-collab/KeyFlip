@@ -57,7 +57,7 @@ internal static class TechnicalTokenDetector
     internal static bool ShouldKeep(string text, int start, int end, bool protectIdentifierFragments = true)
     {
         var word = text[start..end];
-        if (ProtectedWords.Contains(word)) return true;
+        if (IsKnownProtectedWord(word)) return true;
         if (word.Any(char.IsLower) && word.Skip(1).Any(char.IsUpper)) return true;
 
         var touchesIdentifierCharacter = protectIdentifierFragments &&
@@ -65,6 +65,8 @@ internal static class TechnicalTokenDetector
              end < text.Length && (text[end] == '_' || char.IsDigit(text[end])));
         return touchesIdentifierCharacter;
     }
+
+    internal static bool IsKnownProtectedWord(string word) => ProtectedWords.Contains(word);
 }
 
 internal sealed class DeterministicWordLanguageScorer

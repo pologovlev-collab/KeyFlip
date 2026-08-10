@@ -17,8 +17,7 @@ internal static partial class CodeLikeDetector
         }
 
         if (WrongLayoutQuotedSpan().IsMatch(text) &&
-            HasPair(text, '(', ')') &&
-            WrongLayoutStatementEnd().IsMatch(text))
+            (WrongLayoutFunctionCall().IsMatch(text) || text.Contains('=')))
         {
             return true;
         }
@@ -61,7 +60,7 @@ internal static partial class CodeLikeDetector
     [GeneratedRegex("Э[^Э\r\n]+Э")]
     private static partial Regex WrongLayoutQuotedSpan();
 
-    [GeneratedRegex(@"\)ж\s*$")]
-    private static partial Regex WrongLayoutStatementEnd();
+    [GeneratedRegex(@"\b[А-Яа-яЁё]+\s*\(\s*Э[^Э\r\n]+Э\s*\)")]
+    private static partial Regex WrongLayoutFunctionCall();
 
 }

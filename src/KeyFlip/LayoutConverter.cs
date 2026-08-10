@@ -107,10 +107,14 @@ public static class LayoutConverter
 
     private static string ConvertSingleToken(string text)
     {
-        foreach (var character in text)
+        for (var index = 0; index < text.Length; index++)
         {
-            var language = GetLanguage(character);
+            var language = GetLanguage(text[index]);
             if (language is null) continue;
+
+            var start = index;
+            while (index < text.Length && GetLanguage(text[index]) == language) index++;
+            if (TechnicalTokenDetector.IsKnownProtectedWord(text[start..index])) return text;
             return ConvertWithMap(text, language == WordLanguage.English ? EnglishToRussian : RussianToEnglish);
         }
 
@@ -187,13 +191,17 @@ public static class LayoutConverter
         if (forceSingleToken && words.Count == 1)
         {
             var word = words[0];
-            var language = GetLanguage(text[word.Start])!.Value;
-            words[0] = word with
+            if (!preserveTechnicalTokens ||
+                !TechnicalTokenDetector.IsKnownProtectedWord(text[word.Start..word.End]))
             {
-                Direction = language == WordLanguage.English
-                    ? ConversionDirection.EnglishToRussian
-                    : ConversionDirection.RussianToEnglish
-            };
+                var language = GetLanguage(text[word.Start])!.Value;
+                words[0] = word with
+                {
+                    Direction = language == WordLanguage.English
+                        ? ConversionDirection.EnglishToRussian
+                        : ConversionDirection.RussianToEnglish
+                };
+            }
         }
 
         return words;
