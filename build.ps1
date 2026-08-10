@@ -23,8 +23,8 @@ function Invoke-DotNet {
     if ($LASTEXITCODE -ne 0) { throw "dotnet command failed with exit code $LASTEXITCODE" }
 }
 
-Invoke-DotNet @('restore', $applicationProject, '--runtime', $runtime, '--disable-parallel')
-Invoke-DotNet @('restore', $testProject, '--runtime', $runtime, '--disable-parallel')
+Invoke-DotNet @('restore', $applicationProject, '--runtime', $runtime, '--disable-parallel', '-p:NuGetAudit=false')
+Invoke-DotNet @('restore', $testProject, '--runtime', $runtime, '--disable-parallel', '-p:NuGetAudit=false')
 Invoke-DotNet @(
     'build', $solution,
     '--configuration', 'Release',
