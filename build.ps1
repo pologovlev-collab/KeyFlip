@@ -38,7 +38,7 @@ if (Test-Path -LiteralPath $publishDirectory) {
     Remove-Item -LiteralPath $publishDirectory -Recurse -Force
 }
 if (Test-Path -LiteralPath $releaseDirectory) {
-    Remove-Item -LiteralPath $releaseDirectory -Recurse -Force
+    Get-ChildItem -LiteralPath $releaseDirectory -Force | Remove-Item -Recurse -Force
 }
 
 Invoke-DotNet @(
