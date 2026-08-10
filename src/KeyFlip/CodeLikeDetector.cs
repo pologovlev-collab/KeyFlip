@@ -40,31 +40,6 @@ internal static partial class CodeLikeDetector
         return evidence >= 2 || (isCodeProcess && evidence >= 1);
     }
 
-    internal static bool StronglyPrefersFullCandidate(string safeCandidate, string fullCandidate)
-    {
-        if (string.Equals(safeCandidate, fullCandidate, StringComparison.Ordinal)) return false;
-        var safeScore = GetPlausibilityScore(safeCandidate);
-        var fullScore = GetPlausibilityScore(fullCandidate);
-        return fullScore >= 6 && fullScore >= safeScore + 3;
-    }
-
-    private static int GetPlausibilityScore(string text)
-    {
-        var score = 0;
-        if (StrongOperators.Any(text.Contains)) score += 2;
-        if (text.Contains('=')) score += 2;
-        if (HasPair(text, '(', ')')) score++;
-        if (HasPair(text, '[', ']')) score++;
-        if (HasPair(text, '{', '}')) score++;
-        if (HasPair(text, '"', '"')) score += 2;
-        if (CallExpression().IsMatch(text)) score += 2;
-        if (text.TrimEnd().EndsWith(';')) score += 2;
-        if (ProgrammingKeyword().IsMatch(text)) score += 2;
-        if (WrongLayoutQuotedSpan().IsMatch(text)) score -= 3;
-        if (WrongLayoutStatementEnd().IsMatch(text)) score -= 2;
-        return score;
-    }
-
     private static bool HasPair(string text, char open, char close)
     {
         var first = text.IndexOf(open);
@@ -80,7 +55,7 @@ internal static partial class CodeLikeDetector
     [GeneratedRegex("""^\s*(["'])[A-Za-zА-Яа-яЁё]+\1\s*$""")]
     private static partial Regex QuotedToken();
 
-    [GeneratedRegex("""^\s*[([{]*["']?[A-Za-zА-Яа-яЁё]+["']?[)\]}]*[:.,;]?\s*$""")]
+    [GeneratedRegex("""^\s*[([{]*["']?[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё0-9_]*["']?[)\]}]*[:.,;]?\s*$""")]
     private static partial Regex CompactSyntaxToken();
 
     [GeneratedRegex("Э[^Э\r\n]+Э")]
@@ -89,6 +64,4 @@ internal static partial class CodeLikeDetector
     [GeneratedRegex(@"\)ж\s*$")]
     private static partial Regex WrongLayoutStatementEnd();
 
-    [GeneratedRegex(@"\b(?:class|const|def|else|false|for|foreach|function|if|import|include|let|new|null|print|private|protected|public|return|static|struct|true|using|var|void|while)\b", RegexOptions.IgnoreCase)]
-    private static partial Regex ProgrammingKeyword();
 }

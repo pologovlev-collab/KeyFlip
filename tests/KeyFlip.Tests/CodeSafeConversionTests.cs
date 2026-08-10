@@ -23,6 +23,16 @@ internal sealed class CodeSafeConversionTests
         CodeProcessConverts("\"руддщ\",", "\"hello\",");
         CodeProcessConverts("(\"руддщ\").", "(\"hello\").");
         CodeProcessConverts("зкште (ЭруддщЭ)ж", "print (\"hello\");");
+        CodeProcessConverts("зкште (ЭghbdtnЭ)ж", "print (\"привет\");");
+        CodeProcessConverts("const text = ЭруддщЭ;", "const text = \"hello\";");
+        CodeProcessConverts("x=ЭруддщЭж", "x=\"hello\";");
+        CodeProcessConverts("x = ЭруддщЭж", "x = \"hello\";");
+        CodeProcessConverts("(\"руддщ\")ж", "(\"hello\");");
+        CodeProcessConverts("print (\"Привет\")ж", "print (\"Привет\");");
+        CodeProcessConverts("руддщ2:", "hello2:");
+        CodeProcessConverts("руддщ_цщкдв:", "hello_world:");
+        CodeProcessConverts("rfr2:", "rfr2:");
+        CodeProcessConverts("rfr_var:", "rfr_var:");
         CodeProcessConverts("int руддщ;", "int hello;");
         NotCodeLikeInCodeProcess("Это ghbdtn@ текст");
 

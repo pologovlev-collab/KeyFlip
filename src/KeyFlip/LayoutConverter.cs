@@ -58,19 +58,14 @@ public static class LayoutConverter
     }
 
     internal static ConversionResult ConvertCodeSafe(string text) =>
-        ConvertWords(text, forceSingleToken: false);
+        ConvertWords(text, forceSingleToken: false, protectIdentifierFragments: false);
 
     internal static ConversionResult ConvertCodeAware(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
         var safeCandidate = ConvertCodeSafe(text);
-        var fullCandidateText = ConvertCyrillicPhysicalPreservingAscii(text);
-        if (!CodeLikeDetector.StronglyPrefersFullCandidate(safeCandidate.OutputText, fullCandidateText))
-        {
-            return safeCandidate;
-        }
-
-        return ConversionResult.FromCharacterDifferences(text, fullCandidateText);
+        var syntaxCandidate = ApplyConfirmedWrongLayoutSyntax(text, safeCandidate.OutputText);
+        return ConversionResult.FromCharacterDifferences(text, syntaxCandidate);
     }
 
     internal static ConversionResult ConvertTargeted(string text, bool forceSingleToken)
@@ -86,10 +81,18 @@ public static class LayoutConverter
         return ConversionResult.FromCharacterDifferences(text, outputText);
     }
 
-    internal static ConversionResult ConvertWords(string text, bool forceSingleToken)
+    internal static ConversionResult ConvertWords(
+        string text,
+        bool forceSingleToken,
+        bool protectIdentifierFragments = true)
     {
         ArgumentNullException.ThrowIfNull(text);
-        var words = CreateWordTokens(text, preserveTechnicalTokens: true, forceSingleToken, conservative: true);
+        var words = CreateWordTokens(
+            text,
+            preserveTechnicalTokens: true,
+            forceSingleToken,
+            conservative: true,
+            protectIdentifierFragments);
         if (words.Count == 0) return ConversionResult.Unchanged(text);
 
         var edits = words
@@ -145,7 +148,8 @@ public static class LayoutConverter
         string text,
         bool preserveTechnicalTokens,
         bool forceSingleToken,
-        bool conservative)
+        bool conservative,
+        bool protectIdentifierFragments = true)
     {
         var words = new List<WordToken>();
         for (var index = 0; index < text.Length;)
@@ -169,7 +173,10 @@ public static class LayoutConverter
             var shouldConvert = conservative
                 ? MixedDecider.Value.ShouldUseConvertedConservatively(original, language.Value, converted, convertedLanguage)
                 : MixedDecider.Value.ShouldUseConverted(original, language.Value, converted, convertedLanguage);
-            if (preserveTechnicalTokens && TechnicalTokenDetector.ShouldKeep(text, start, index) || !shouldConvert)
+            var protectCurrentIdentifierFragment = protectIdentifierFragments || language == WordLanguage.English;
+            if (preserveTechnicalTokens &&
+                TechnicalTokenDetector.ShouldKeep(text, start, index, protectCurrentIdentifierFragment) ||
+                !shouldConvert)
             {
                 direction = ConversionDirection.None;
             }
@@ -303,19 +310,60 @@ public static class LayoutConverter
         });
     }
 
-    private static string ConvertCyrillicPhysicalPreservingAscii(string text)
+    private static string ApplyConfirmedWrongLayoutSyntax(string source, string safeCandidate)
     {
-        return string.Create(text.Length, text, static (destination, source) =>
+        var result = safeCandidate.ToCharArray();
+        for (var opening = source.IndexOf('Э'); opening >= 0; opening = source.IndexOf('Э', opening + 1))
         {
-            for (var index = 0; index < source.Length; index++)
+            var closing = source.IndexOf('Э', opening + 1);
+            if (closing < 0 || !IsStringLiteralPosition(source, opening, closing)) continue;
+
+            var content = source[(opening + 1)..closing];
+            var convertedContent = ConvertWords(
+                content,
+                forceSingleToken: false,
+                protectIdentifierFragments: false).OutputText;
+            result[opening] = '"';
+            convertedContent.CopyTo(0, result, opening + 1, convertedContent.Length);
+            result[closing] = '"';
+            if (closing + 1 < source.Length && source[closing + 1] == 'ж')
             {
-                var character = source[index];
-                destination[index] = IsRussianLetter(character) &&
-                    RussianToEnglish.TryGetValue(character, out var converted)
-                        ? converted
-                        : character;
+                result[closing + 1] = ';';
             }
-        });
+
+            opening = closing;
+        }
+
+        for (var index = 1; index < source.Length; index++)
+        {
+            if (source[index] == 'ж' && ")]}".Contains(source[index - 1], StringComparison.Ordinal) &&
+                (index + 1 == source.Length || char.IsWhiteSpace(source[index + 1])))
+            {
+                result[index] = ';';
+            }
+        }
+
+        return new string(result);
+    }
+
+    private static bool IsStringLiteralPosition(string text, int opening, int closing)
+    {
+        if (closing == opening + 1) return false;
+        var before = FindNearestNonWhitespace(text, opening - 1, step: -1);
+        var after = FindNearestNonWhitespace(text, closing + 1, step: 1);
+        return (before == '\0' || "([{=,:".Contains(before, StringComparison.Ordinal)) &&
+            (after == '\0' || ")]}.,;ж".Contains(after, StringComparison.Ordinal));
+    }
+
+    private static char FindNearestNonWhitespace(string text, int index, int step)
+    {
+        while (index >= 0 && index < text.Length)
+        {
+            if (!char.IsWhiteSpace(text[index])) return text[index];
+            index += step;
+        }
+
+        return '\0';
     }
 
     private static WordLanguage? GetLanguage(char character)

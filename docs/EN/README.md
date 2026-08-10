@@ -77,7 +77,7 @@ ghbdtn vbh.zip
 
 A selection containing one alphabetic token uses forced physical-layout conversion. Multi-word selections use conservative per-word decisions based on local Windows spell checking and deterministic rules. Spaces, tabs, and line endings are preserved exactly.
 
-In code contexts, KeyFlip first builds a safe candidate that preserves existing ASCII punctuation. It chooses full physical conversion of possible wrong-layout syntax only when that candidate strongly improves code plausibility. Ambiguous input keeps the safe candidate. A confirmed VS Code integrated terminal aborts before Copy or any clipboard modification.
+In code contexts, KeyFlip first builds a safe candidate that preserves existing ASCII punctuation. An additional candidate starts from that safe result and changes only confirmed syntax positions: wrong-layout quote delimiters and a terminator after a closing bracket or confirmed closing quote. Legitimate Cyrillic content inside existing ASCII quotes remains untouched. Ambiguous input keeps the safe candidate. A confirmed VS Code integrated terminal aborts before Copy or any clipboard modification.
 
 Microsoft Word uses targeted Range replacements instead of replacing the complete selection. In File Explorer, a confirmed rename context uses filename policy and preserves the final extension.
 
@@ -95,7 +95,7 @@ The same self-contained x64 release targets both Windows 10 and Windows 11 x64.
 
 ## Security
 
-KeyFlip is open source and operates entirely on the local computer. An unsigned executable may trigger Windows SmartScreen or antivirus warnings. Do not disable security software or add an unknown file to exclusions. Download KeyFlip only from the official GitHub release, verify its SHA-256 checksum, or build it yourself from source.
+KeyFlip's source is available for inspection, and the application operates entirely on the local computer. An unsigned executable may trigger Windows SmartScreen or antivirus warnings. Do not disable security software or add an unknown file to exclusions. Download KeyFlip only from the official GitHub release, verify its SHA-256 checksum, or build it yourself from source.
 
 ## Privacy
 

@@ -54,15 +54,15 @@ internal static class TechnicalTokenDetector
         "os", "db"
     };
 
-    internal static bool ShouldKeep(string text, int start, int end)
+    internal static bool ShouldKeep(string text, int start, int end, bool protectIdentifierFragments = true)
     {
         var word = text[start..end];
         if (ProtectedWords.Contains(word)) return true;
         if (word.Any(char.IsLower) && word.Skip(1).Any(char.IsUpper)) return true;
 
-        var touchesIdentifierCharacter =
-            start > 0 && (text[start - 1] == '_' || char.IsDigit(text[start - 1])) ||
-            end < text.Length && (text[end] == '_' || char.IsDigit(text[end]));
+        var touchesIdentifierCharacter = protectIdentifierFragments &&
+            (start > 0 && (text[start - 1] == '_' || char.IsDigit(text[start - 1])) ||
+             end < text.Length && (text[end] == '_' || char.IsDigit(text[end])));
         return touchesIdentifierCharacter;
     }
 }
