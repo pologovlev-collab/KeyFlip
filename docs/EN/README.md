@@ -4,7 +4,7 @@
 
 A small Windows utility that fixes selected text typed using the wrong Russian or English keyboard layout.
 
-`ghbdtn` → `привет`  
+`ghbdtn` → `привет`<br>
 `руддщ` → `hello`
 
 Default hotkey: `Ctrl + Shift + K`.
