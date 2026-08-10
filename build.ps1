@@ -23,6 +23,13 @@ function Invoke-DotNet {
     if ($LASTEXITCODE -ne 0) { throw "dotnet command failed with exit code $LASTEXITCODE" }
 }
 
+if (Test-Path -LiteralPath $publishDirectory) {
+    Remove-Item -LiteralPath $publishDirectory -Recurse -Force
+}
+if (Test-Path -LiteralPath $releaseDirectory) {
+    Get-ChildItem -LiteralPath $releaseDirectory -Force | Remove-Item -Recurse -Force
+}
+
 Invoke-DotNet @('restore', $applicationProject, '--runtime', $runtime, '--disable-parallel', '-p:NuGetAudit=false')
 Invoke-DotNet @('restore', $testProject, '--runtime', $runtime, '--disable-parallel', '-p:NuGetAudit=false')
 Invoke-DotNet @(
@@ -33,13 +40,6 @@ Invoke-DotNet @(
     '-p:UseSharedCompilation=false',
     "-p:SourceRevisionId=$sourceRevision")
 Invoke-DotNet @('run', '--project', $testProject, '--configuration', 'Release', '--no-build', '--no-restore')
-
-if (Test-Path -LiteralPath $publishDirectory) {
-    Remove-Item -LiteralPath $publishDirectory -Recurse -Force
-}
-if (Test-Path -LiteralPath $releaseDirectory) {
-    Get-ChildItem -LiteralPath $releaseDirectory -Force | Remove-Item -Recurse -Force
-}
 
 Invoke-DotNet @(
     'publish', $applicationProject,
