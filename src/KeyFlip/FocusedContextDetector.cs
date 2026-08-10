@@ -20,13 +20,24 @@ internal enum VsCodeContext
     Unknown
 }
 
+internal enum ExplorerContext
+{
+    Rename,
+    Search,
+    Address,
+    Unknown
+}
+
 internal enum FocusedTargetContext
 {
     Default,
     VsCodeEditor,
     VsCodeTerminal,
     VsCodeUnknown,
-    ExplorerFileRename
+    ExplorerFileRename,
+    ExplorerSearch,
+    ExplorerAddress,
+    ExplorerUnknown
 }
 
 internal readonly record struct UiElementDescriptor(
@@ -39,6 +50,8 @@ internal static class FocusedContextClassifier
 {
     private static readonly string[] TerminalMarkers = { "xterm", "terminal.integrated", "terminal-instance" };
     private static readonly string[] EditorMarkers = { "monaco-editor", "code-editor" };
+    private static readonly string[] ExplorerSearchMarkers = { "search", "universalsearch" };
+    private static readonly string[] ExplorerAddressMarkers = { "address", "breadcrumb", "location", "travelband" };
 
     internal static VsCodeContext ClassifyVsCode(IReadOnlyList<UiElementDescriptor> elements)
     {
@@ -47,15 +60,48 @@ internal static class FocusedContextClassifier
         return VsCodeContext.Unknown;
     }
 
+    internal static ExplorerContext ClassifyExplorer(IReadOnlyList<UiElementDescriptor> elements)
+    {
+        if (elements.Count == 0 || elements[0].ControlKind != UiControlKind.Edit) return ExplorerContext.Unknown;
+        if (elements.Any(element => HasMarker(element, ExplorerSearchMarkers))) return ExplorerContext.Search;
+        if (elements.Any(element => HasMarker(element, ExplorerAddressMarkers))) return ExplorerContext.Address;
+        if (elements.Skip(1).Any(element => element.ControlKind is UiControlKind.ListItem or UiControlKind.DataItem))
+        {
+            return ExplorerContext.Rename;
+        }
+
+        return ExplorerContext.Unknown;
+    }
+
     internal static bool IsExplorerFileRename(IReadOnlyList<UiElementDescriptor> elements) =>
-        elements.Count > 1 &&
-        elements[0].ControlKind == UiControlKind.Edit &&
-        elements.Skip(1).Any(element => element.ControlKind is UiControlKind.ListItem or UiControlKind.DataItem);
+        ClassifyExplorer(elements) == ExplorerContext.Rename;
 
     private static bool HasMarker(UiElementDescriptor element, IEnumerable<string> markers) =>
         markers.Any(marker =>
             element.AutomationId.Contains(marker, StringComparison.OrdinalIgnoreCase) ||
             element.ClassName.Contains(marker, StringComparison.OrdinalIgnoreCase));
+}
+
+internal static class FileNameFallbackClassifier
+{
+    private const int MaximumExtensionLength = 10;
+    private const string RejectedCharacters = "@:/\\?*\"<>|";
+
+    internal static bool IsLikelyFileName(string text)
+    {
+        if (string.IsNullOrEmpty(text) || text.Any(character => char.IsWhiteSpace(character) || char.IsControl(character)))
+        {
+            return false;
+        }
+
+        if (text.IndexOfAny(RejectedCharacters.ToCharArray()) >= 0) return false;
+        var lastDot = text.LastIndexOf('.');
+        if (lastDot <= 0 || lastDot == text.Length - 1) return false;
+
+        var extension = text[(lastDot + 1)..];
+        if (extension.Length > MaximumExtensionLength || !extension.All(char.IsLetterOrDigit)) return false;
+        return text[..lastDot].Split('.').All(static segment => segment.Length > 0);
+    }
 }
 
 internal sealed class FocusedContextDetector
@@ -76,9 +122,13 @@ internal sealed class FocusedContextDetector
             var elements = CaptureFocusedElementAndAncestors();
             if (isExplorer)
             {
-                return FocusedContextClassifier.IsExplorerFileRename(elements)
-                    ? FocusedTargetContext.ExplorerFileRename
-                    : FocusedTargetContext.Default;
+                return FocusedContextClassifier.ClassifyExplorer(elements) switch
+                {
+                    ExplorerContext.Rename => FocusedTargetContext.ExplorerFileRename,
+                    ExplorerContext.Search => FocusedTargetContext.ExplorerSearch,
+                    ExplorerContext.Address => FocusedTargetContext.ExplorerAddress,
+                    _ => FocusedTargetContext.ExplorerUnknown
+                };
             }
 
             return FocusedContextClassifier.ClassifyVsCode(elements) switch
@@ -94,21 +144,33 @@ internal sealed class FocusedContextDetector
             UnauthorizedAccessException or
             COMException)
         {
-            return isVsCode ? FocusedTargetContext.VsCodeUnknown : FocusedTargetContext.Default;
+            return isVsCode ? FocusedTargetContext.VsCodeUnknown : FocusedTargetContext.ExplorerUnknown;
         }
     }
 
     private static IReadOnlyList<UiElementDescriptor> CaptureFocusedElementAndAncestors()
     {
         var elements = new List<UiElementDescriptor>(MaximumElements);
-        var element = AutomationElement.FocusedElement;
+        var focused = AutomationElement.FocusedElement;
+        if (focused is null) return elements;
+
+        elements.Add(CreateDescriptor(focused));
+        AppendAncestors(elements, focused, TreeWalker.ControlViewWalker);
+        AppendAncestors(elements, focused, TreeWalker.RawViewWalker);
+        return elements;
+    }
+
+    private static void AppendAncestors(
+        ICollection<UiElementDescriptor> elements,
+        AutomationElement focused,
+        TreeWalker walker)
+    {
+        var element = walker.GetParent(focused);
         while (element is not null && elements.Count < MaximumElements)
         {
             elements.Add(CreateDescriptor(element));
-            element = TreeWalker.ControlViewWalker.GetParent(element);
+            element = walker.GetParent(element);
         }
-
-        return elements;
     }
 
     private static UiElementDescriptor CreateDescriptor(AutomationElement element) => new(

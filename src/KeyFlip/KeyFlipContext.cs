@@ -135,6 +135,18 @@ public sealed class KeyFlipContext : ApplicationContext
                 case FocusedTargetContext.VsCodeUnknown:
                     _logger.Log("VSCODE_CONTEXT_UNKNOWN", "process=Code.exe");
                     break;
+                case FocusedTargetContext.ExplorerFileRename:
+                    _logger.Log("EXPLORER_CONTEXT_RENAME");
+                    break;
+                case FocusedTargetContext.ExplorerSearch:
+                    _logger.Log("EXPLORER_CONTEXT_SEARCH");
+                    break;
+                case FocusedTargetContext.ExplorerAddress:
+                    _logger.Log("EXPLORER_CONTEXT_ADDRESS");
+                    break;
+                case FocusedTargetContext.ExplorerUnknown:
+                    _logger.Log("EXPLORER_CONTEXT_UNKNOWN");
+                    break;
             }
 
             if (string.Equals(foregroundExecutable, "WINWORD.EXE", StringComparison.OrdinalIgnoreCase))
@@ -164,9 +176,12 @@ public sealed class KeyFlipContext : ApplicationContext
             _logger.Log("TEXT_AVAILABLE", $"clipboardChanged={(copyResult.SequenceChanged ? "yes" : "no")}");
 
             var isCodeProcess = string.Equals(foregroundExecutable, "Code.exe", StringComparison.OrdinalIgnoreCase);
+            var useFilenameFallback = focusedContext == FocusedTargetContext.ExplorerUnknown &&
+                FileNameFallbackClassifier.IsLikelyFileName(copyResult.Text);
+            if (useFilenameFallback) _logger.Log("EXPLORER_CONTEXT_FILENAME_FALLBACK");
             var converted = CodeLikeDetector.LooksLikeCode(copyResult.Text, isCodeProcess)
                 ? LayoutConverter.ConvertCodeSafe(copyResult.Text).OutputText
-                : focusedContext == FocusedTargetContext.ExplorerFileRename
+                : focusedContext == FocusedTargetContext.ExplorerFileRename || useFilenameFallback
                     ? FileNameConverter.ConvertForRename(copyResult.Text)
                     : LayoutConverter.Convert(copyResult.Text);
             if (!ConversionGuard.CanPaste(copyResult.Text, converted))
