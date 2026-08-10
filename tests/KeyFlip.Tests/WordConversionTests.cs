@@ -9,8 +9,35 @@ internal sealed class WordConversionTests
     public void Run()
     {
         SingleWrongLayoutWordProducesOneEdit();
+        AttachedEnglishPunctuationFollowsConvertedWord();
+        AttachedRussianPunctuationFollowsConvertedWord();
+        SymbolOnlySelectionProducesTargetedEdits();
         FormattedSelectionChangesOnlyWrongToken();
         ParagraphAndTableSeparatorsAreOutsideEdits();
+    }
+
+    private void AttachedEnglishPunctuationFollowsConvertedWord()
+    {
+        var result = WordEditPlanner.Create("ghbdtn@");
+
+        Equal("привет\"", result.OutputText);
+        True(result.Edits.Count > 0);
+    }
+
+    private void AttachedRussianPunctuationFollowsConvertedWord()
+    {
+        var result = WordEditPlanner.Create("руддщ№");
+
+        Equal("hello#", result.OutputText);
+        True(result.Edits.Count > 0);
+    }
+
+    private void SymbolOnlySelectionProducesTargetedEdits()
+    {
+        var result = WordEditPlanner.Create("@#$^&");
+
+        Equal("\"№;:?", result.OutputText);
+        True(result.Edits.Count > 0);
     }
 
     private void SingleWrongLayoutWordProducesOneEdit()
@@ -73,6 +100,12 @@ internal sealed class WordConversionTests
     private void False(bool value)
     {
         if (value) throw new InvalidOperationException("Expected false, actual true.");
+        Passed++;
+    }
+
+    private void True(bool value)
+    {
+        if (!value) throw new InvalidOperationException("Expected true, actual false.");
         Passed++;
     }
 }

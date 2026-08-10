@@ -12,9 +12,8 @@ internal static partial class CodeLikeDetector
         if (StrongOperators.Any(text.Contains)) return true;
 
         var evidence = 0;
-        if (text.Contains('=') && !text.Contains(" = ", StringComparison.OrdinalIgnoreCase)) evidence++;
-        else if (text.Contains('=')) evidence++;
-        if (text.Contains(';')) evidence++;
+        if (text.Contains('=')) evidence++;
+        if (text.TrimEnd().EndsWith(';')) evidence++;
         if (HasPair(text, '{', '}') && text.Contains(':')) evidence += 2;
         else if (HasPair(text, '{', '}')) evidence++;
         if (HasPair(text, '[', ']')) evidence++;
@@ -24,8 +23,9 @@ internal static partial class CodeLikeDetector
         var hasStructuredQuotes = HasPair(text, '"', '"') &&
             (text.Contains('=') || text.Contains(':') || text.Contains('(') || text.Contains('{'));
         if (hasStructuredQuotes) evidence++;
+        if (QuotedToken().IsMatch(text)) evidence++;
 
-        return evidence >= 2 || (isCodeProcess && evidence >= 2);
+        return evidence >= 2 || (isCodeProcess && evidence >= 1);
     }
 
     private static bool HasPair(string text, char open, char close)
@@ -39,4 +39,7 @@ internal static partial class CodeLikeDetector
 
     [GeneratedRegex(@"(?m)^\s*#\s*[A-Za-z_]+")]
     private static partial Regex Directive();
+
+    [GeneratedRegex("""^\s*(["'])[A-Za-zА-Яа-яЁё]+\1\s*$""")]
+    private static partial Regex QuotedToken();
 }

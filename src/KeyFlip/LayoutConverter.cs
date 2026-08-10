@@ -60,6 +60,19 @@ public static class LayoutConverter
     internal static ConversionResult ConvertCodeSafe(string text) =>
         ConvertWords(text, forceSingleToken: false);
 
+    internal static ConversionResult ConvertTargeted(string text, bool forceSingleToken)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        var outputText = CountAlphabeticTokens(text) == 0
+            ? ConvertSymbolOnly(text)
+            : ConvertWithTokens(text, CreateWordTokens(
+                text,
+                preserveTechnicalTokens: true,
+                forceSingleToken,
+                conservative: true));
+        return ConversionResult.FromCharacterDifferences(text, outputText);
+    }
+
     internal static ConversionResult ConvertWords(string text, bool forceSingleToken)
     {
         ArgumentNullException.ThrowIfNull(text);
@@ -91,6 +104,11 @@ public static class LayoutConverter
     private static string ConvertSmart(string text)
     {
         var words = CreateWordTokens(text, preserveTechnicalTokens: true, forceSingleToken: false, conservative: false);
+        return ConvertWithTokens(text, words);
+    }
+
+    private static string ConvertWithTokens(string text, IReadOnlyList<WordToken> words)
+    {
         var result = new StringBuilder(text.Length);
 
         AppendLeadingSeparator(result, text[..words[0].Start], words[0].Direction);

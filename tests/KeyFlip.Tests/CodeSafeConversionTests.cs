@@ -13,6 +13,11 @@ internal sealed class CodeSafeConversionTests
         CodeLike("{\"text\": \"руддщ\"}");
         NotCodeLike("Это ghbdtn@ текст");
         NotCodeLike("Он сказал \"привет\"");
+        CodeProcessConverts("\"руддщ\"", "\"hello\"");
+        CodeProcessConverts("'руддщ'", "'hello'");
+        CodeProcessConverts("руддщ;", "hello;");
+        CodeProcessConverts("int руддщ;", "int hello;");
+        NotCodeLikeInCodeProcess("Это ghbdtn@ текст");
 
         Converts("std::string text = \"руддщ\";", "std::string text = \"hello\";");
         Converts("std::string text = \"ghbdtn\";", "std::string text = \"привет\";");
@@ -21,6 +26,7 @@ internal sealed class CodeSafeConversionTests
         Converts("{\"text\": \"руддщ\"}", "{\"text\": \"hello\"}");
         Unchanged("const API_URL = \"https://example.com\";");
         Unchanged("std::string");
+        Unchanged("SQL HTTP HTTPS JSON API_URL");
 
         GeneralUnchanged("Use SQL HTML CSS HTTP API JSON in this project");
         GeneralUnchanged("Я использую SQL HTML CSS HTTP API JSON в этом проекте");
@@ -29,6 +35,14 @@ internal sealed class CodeSafeConversionTests
     private void CodeLike(string text) => True(CodeLikeDetector.LooksLikeCode(text));
 
     private void NotCodeLike(string text) => False(CodeLikeDetector.LooksLikeCode(text));
+
+    private void NotCodeLikeInCodeProcess(string text) => False(CodeLikeDetector.LooksLikeCode(text, isCodeProcess: true));
+
+    private void CodeProcessConverts(string input, string expected)
+    {
+        True(CodeLikeDetector.LooksLikeCode(input, isCodeProcess: true));
+        Equal(expected, LayoutConverter.ConvertCodeSafe(input).OutputText);
+    }
 
     private void Converts(string input, string expected) =>
         Equal(expected, LayoutConverter.ConvertCodeSafe(input).OutputText);

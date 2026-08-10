@@ -11,6 +11,8 @@ internal sealed class LayoutConverterTests
         Converts("ghbdtn", "привет");
         Converts("руддщ", "hello");
         Converts("Ghbdtn", "Привет");
+        Converts("GHBDTN", "ПРИВЕТ");
+        Converts("GHBDTN RFR LTKF", "ПРИВЕТ КАК ДЕЛА");
         Converts("ghbdtn 123🙂\nvbh", "привет 123🙂\nмир");
         Converts("q,<.>", "йбБюЮ");
         Converts("q@#$^&", "й\"№;:?");
@@ -33,6 +35,10 @@ internal sealed class LayoutConverterTests
         Converts("hello ghbdtn world", "hello привет world");
         Unchanged("как дела");
         Unchanged("hello world");
+        Unchanged("SQL HTML CSS HTTP HTTPS API JSON XML GPT URL URI CPU GPU RAM SSD HDD IDE CLI SDK UI UX UTF ASCII TCP UDP IP DNS SSH SSL TLS REST RPC JWT UUID GUID OS DB");
+        Converts("Моя почта test@example.com и ghbdtn", "Моя почта test@example.com и привет");
+        Unchanged("test@example.com");
+        Unchanged("https://example.com");
         Converts("Это ghbdtn@ текст", "Это привет\" текст");
         Converts("как руддщ№ дела", "как hello# дела");
         Converts("ghbdtn@", "привет\"");

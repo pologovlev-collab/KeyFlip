@@ -47,16 +47,18 @@ internal static class TechnicalTokenDetector
     private static readonly HashSet<string> ProtectedWords = new(StringComparer.OrdinalIgnoreCase)
     {
         "std", "string", "int", "char", "bool", "void", "const", "auto", "return", "class",
-        "namespace", "public", "private", "protected", "include", "api", "url", "uri", "http",
-        "https", "html", "css", "sql", "json", "xml", "gpt"
+        "namespace", "public", "private", "protected", "include",
+        "api", "url", "uri", "http", "https", "html", "css", "sql", "json", "xml", "gpt",
+        "cpu", "gpu", "ram", "ssd", "hdd", "ide", "cli", "sdk", "ui", "ux", "utf", "ascii",
+        "tcp", "udp", "ip", "dns", "ssh", "ssl", "tls", "rest", "rpc", "jwt", "uuid", "guid",
+        "os", "db"
     };
 
     internal static bool ShouldKeep(string text, int start, int end)
     {
         var word = text[start..end];
         if (ProtectedWords.Contains(word)) return true;
-        if (word.Length >= 2 && word.All(static character => !char.IsLetter(character) || char.IsUpper(character))) return true;
-        if (word.Skip(1).Any(char.IsUpper)) return true;
+        if (word.Any(char.IsLower) && word.Skip(1).Any(char.IsUpper)) return true;
 
         var touchesIdentifierCharacter =
             start > 0 && (text[start - 1] == '_' || char.IsDigit(text[start - 1])) ||

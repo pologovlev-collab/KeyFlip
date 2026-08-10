@@ -26,4 +26,30 @@ internal sealed record ConversionResult(string OutputText, IReadOnlyList<Convers
         output.Append(text.AsSpan(position));
         return new ConversionResult(output.ToString(), edits);
     }
+
+    internal static ConversionResult FromCharacterDifferences(string text, string outputText)
+    {
+        if (text.Length != outputText.Length)
+        {
+            throw new ArgumentException("Targeted conversion must preserve character count.", nameof(outputText));
+        }
+
+        var edits = new List<ConversionEdit>();
+        for (var index = 0; index < text.Length;)
+        {
+            if (text[index] == outputText[index] || IsProtectedControl(text[index]))
+            {
+                index++;
+                continue;
+            }
+
+            var start = index;
+            while (index < text.Length && text[index] != outputText[index] && !IsProtectedControl(text[index])) index++;
+            edits.Add(new ConversionEdit(start, index - start, outputText[start..index]));
+        }
+
+        return edits.Count == 0 ? Unchanged(text) : new ConversionResult(outputText, edits);
+    }
+
+    private static bool IsProtectedControl(char character) => character is '\r' or '\n' or '\a';
 }
