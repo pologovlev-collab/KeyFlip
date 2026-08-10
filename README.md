@@ -1,35 +1,42 @@
+**🇷🇺 Русский • [🇬🇧 English](docs/EN/README.md)**
+
 # KeyFlip
 
-KeyFlip is a lightweight Windows utility that fixes text typed using the wrong Russian/English keyboard layout.
+Небольшая Windows-утилита, которая исправляет выделенный текст, набранный в неправильной русской или английской раскладке.
 
 `ghbdtn` → `привет`  
 `руддщ` → `hello`
 
-Default hotkey: `Ctrl+Shift+K`.
+Горячая клавиша по умолчанию: `Ctrl + Shift + K`.
 
-## Features
+## 🚀 Скачать
 
-- Russian ↔ English selected-text conversion
-- Smart multi-word conversion
-- Complete physical US QWERTY ↔ Russian ЙЦУКЕН mapping
-- Shift and symbol mapping
-- Code-safe conversion that preserves syntax punctuation
-- Formatting-preserving conversion in Microsoft Word
-- File Explorer filename and extension preservation
-- Configurable global hotkey and system tray
-- Optional Windows autostart
-- Terminal and protected-password exclusion
-- Clipboard preservation
-- Fully offline, with no AI or telemetry
-- One standalone Windows x64 executable
+| Система | Архитектура | Скачать | Статус |
+|---|---:|---|---|
+| Windows 10 / 11 | x64 | `KeyFlip_windows_x64.exe` | Stable |
+| Windows 10 / 11 | ARM64 | — | Planned / не тестировалось |
 
-## How to use
+Публичный GitHub Release ещё не создан, поэтому в README намеренно нет неработающей ссылки. После публикации стабильный прямой URL будет иметь вид:
 
-1. Select text.
-2. Press `Ctrl+Shift+K`.
-3. KeyFlip fixes the wrong-layout parts.
+```text
+https://github.com/<OWNER>/KeyFlip/releases/latest/download/KeyFlip_windows_x64.exe
+```
 
-## Examples
+Страница всех версий: `https://github.com/<OWNER>/KeyFlip/releases`. `<OWNER>` нужно заменить реальным владельцем репозитория при публикации.
+
+Релиз — один portable EXE без отдельной установки .NET. Скачивайте также `SHA256SUMS.txt` и сверяйте SHA-256.
+
+## Быстрый старт
+
+1. Скачайте `KeyFlip_windows_x64.exe` из официального GitHub Release.
+2. Поместите файл в постоянную папку и запустите его.
+3. Выделите текст в поддерживаемом приложении.
+4. Нажмите `Ctrl + Shift + K`.
+5. Управляйте KeyFlip, горячей клавишей и автозапуском через значок в системном трее.
+
+При включённом автозапуске KeyFlip обновляет путь запуска на текущее расположение EXE. Если вы перенесли portable-файл, один раз запустите его вручную.
+
+## Примеры
 
 ```text
 ghbdtn
@@ -47,54 +54,75 @@ GHBDTN RFR LTKF
 std::string text = "руддщ";
 → std::string text = "hello";
 
-ghbdtn.vbh.zip
-→ привет.мир.zip
+зкште (ЭруддщЭ)ж
+→ print ("hello");
+
+ghbdtn vbh.zip
+→ привет мир.zip
 ```
 
-## Smart conversion
+## Возможности
 
-A selection with one alphabetic token uses forced physical-layout conversion. Multiple words use conservative per-word decisions based on local Windows spell checking and a deterministic fallback. KeyFlip does not use AI or a network service.
+- Умное преобразование русского и английского текста по словам.
+- Полная физическая карта US QWERTY ↔ ЙЦУКЕН, включая Shift и символы.
+- Code-aware режим: сохраняет уже правильный синтаксис и конвертирует уверенно распознанный синтаксис, набранный в другой раскладке.
+- Сохранение форматирования и структуры абзацев в Microsoft Word.
+- Преобразование имён файлов в Проводнике с сохранением расширения.
+- Настраиваемая глобальная горячая клавиша, системный трей и автозапуск.
+- Защита полей паролей и исключение терминалов.
+- Сохранение и восстановление буфера обмена.
+- Полностью локальная и офлайн-работа без AI, телеметрии и аналитики.
 
-## Code-safe mode
+## Как это работает
 
-Code-like selections convert confidently mistyped alphabetic tokens while preserving punctuation, quotes, whitespace, delimiters, and operators exactly. VS Code integrated terminals are intentionally ignored.
+Для одного буквенного токена KeyFlip выполняет принудительное физическое преобразование раскладки. Для нескольких слов используется консервативное решение по каждому слову на основе локальной проверки орфографии Windows и детерминированных правил. Пробелы, табуляции и переводы строк сохраняются точно.
 
-## Microsoft Word
+В code context сначала строится безопасный кандидат, который не меняет существующую ASCII-пунктуацию. Полное физическое преобразование возможного синтаксиса выбирается только при сильном улучшении формы кода. При сомнении остаётся безопасный вариант. Подтверждённый VS Code Integrated Terminal игнорируется до Copy и изменения буфера обмена.
 
-Word uses targeted Range replacements instead of replacing the whole selection, which preserves surrounding formatting and paragraph structure. Uncommon add-ins or custom Word hosts may not expose a safe automation context; KeyFlip aborts in that case.
+В Microsoft Word используются точечные замены Range вместо замены всего выделения. В Проводнике подтверждённый режим переименования применяет filename-policy, сохраняя последнее расширение.
 
-## Download
+## Поддерживаемые системы
 
-Download `KeyFlip-v1.0.0-win-x64.exe` from the GitHub Releases section.
+| Система | Поддержка |
+|---|---|
+| Windows 10 x64 | Да |
+| Windows 11 x64 | Да |
+| Windows 10 / 11 ARM64 | Planned, не тестировалось; native ARM64 build отсутствует |
+| Windows 7 | Нет — текущая сборка использует .NET 8 |
+| Linux / macOS | Нет — приложение использует WinForms, Win32, COM и UI Automation |
 
-The release is portable. Place the executable in a permanent folder before enabling autostart, because the autostart entry points to its current path. The optional `install.ps1` script copies it to `%LocalAppData%\Programs\KeyFlip`.
+Один и тот же self-contained x64-релиз предназначен для Windows 10 и Windows 11 x64.
 
-## Requirements
+## Безопасность
 
-- Windows 10 or Windows 11 x64
-- No separate .NET runtime installation for the self-contained release
+KeyFlip имеет открытый исходный код и работает полностью локально. Неподписанный EXE может вызвать предупреждение Windows SmartScreen или антивируса. Не отключайте защиту и не добавляйте неизвестные файлы в исключения: скачивайте KeyFlip только из официального GitHub Release, сверяйте SHA-256 или собирайте приложение самостоятельно из исходников.
 
-The x64 release is not a native ARM64 build.
+## Приватность
 
-## Privacy
+KeyFlip не отправляет текст, не использует AI, не собирает телеметрию, не требует аккаунт или интернет и не сохраняет выделенный текст. Диагностический журнал содержит только безопасные стадии операции, версию и классификацию контекста — без выделенного текста, команд терминала и содержимого буфера обмена.
 
-KeyFlip does not send text anywhere, use AI, collect telemetry, require an account, require an internet connection, or store selected text. Diagnostic logs contain operational stages only and never include selected text or clipboard contents.
+## Известные ограничения
 
-## Limitations
+- Приложения с повышенными правами могут отклонять синтетический ввод из-за границ безопасности Windows.
+- Поля паролей и терминалы намеренно игнорируются.
+- При редком или неподдерживаемом формате буфера обмена KeyFlip прерывает операцию, чтобы не рисковать данными.
+- В Microsoft Word смешанное форматирование внутри одного отдельного слова может стать единообразным.
+- Необычные Word add-ins и custom hosts могут не предоставить безопасный automation context.
+- Для папки с точкой conservative Explorer fallback может не определить filename context; подтверждённое переименование работает отдельно.
 
-- Elevated applications may reject synthetic input because of Windows security boundaries.
-- Protected password controls and terminals are intentionally ignored.
-- Rare or custom clipboard formats may cause KeyFlip to abort rather than risk losing clipboard data.
-- The x64 release is not a native ARM64 build.
+## Сборка из исходников
 
-## Build from source
-
-Requirements: Windows and the .NET 8 SDK.
+Требуются Windows и .NET 8 SDK.
 
 ```powershell
 .\build.ps1
 ```
 
-The script restores dependencies, builds the solution, runs all automated checks, and publishes the self-contained release to `artifacts\release\win-x64`.
+Скрипт выполняет restore, Release build, все автоматические проверки и создаёт self-contained single-file win-x64 релиз в `artifacts\release\win-x64`:
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for a concise technical overview and [RELEASE_NOTES.md](RELEASE_NOTES.md) for the v1.0.0 release text.
+```text
+KeyFlip_windows_x64.exe
+SHA256SUMS.txt
+```
+
+Архитектура описана в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), текст релиза — в [RELEASE_NOTES.md](RELEASE_NOTES.md).

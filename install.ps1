@@ -3,7 +3,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$releaseAssetName = 'KeyFlip-v1.0.0-win-x64.exe'
+$releaseAssetName = 'KeyFlip_windows_x64.exe'
 $installedExecutableName = 'KeyFlip.exe'
 $sourceExecutable = Join-Path $SourceDirectory $releaseAssetName
 $installDirectory = Join-Path $env:LOCALAPPDATA 'Programs\KeyFlip'
