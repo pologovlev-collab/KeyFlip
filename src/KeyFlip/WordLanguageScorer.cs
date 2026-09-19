@@ -9,6 +9,7 @@ internal enum WordLanguage
 internal enum WordConversionDecision
 {
     ConfidentConvert,
+    ConfidentKeep,
     HardKeep,
     Ambiguous
 }
@@ -20,33 +21,56 @@ internal interface IWordLanguageScorer
 
 internal sealed class MixedWordDecider
 {
-    private readonly IWordLanguageScorer? _windowsSpellChecker = WindowsSpellChecker.TryCreate();
+    private readonly IWordLanguageScorer? _languageScorer;
     private readonly DeterministicWordLanguageScorer _fallback = new();
+
+    internal MixedWordDecider() : this(WindowsSpellChecker.TryCreate())
+    {
+    }
+
+    internal MixedWordDecider(IWordLanguageScorer? languageScorer) => _languageScorer = languageScorer;
 
     internal WordConversionDecision Decide(
         string original,
         WordLanguage originalLanguage,
         string converted,
         WordLanguage convertedLanguage,
-        int conversionEvidenceBonus = 0)
+        int conversionEvidenceBonus = 0,
+        bool isPhysicalCluster = false)
     {
-        if (original.Length == 1)
+        var originalIsCommon = _fallback.IsCommonWord(original, originalLanguage);
+        var convertedIsCommon = _fallback.IsCommonWord(converted, convertedLanguage);
+        var originalScore = _fallback.Score(original, originalLanguage);
+        var convertedScore = _fallback.Score(converted, convertedLanguage);
+
+        if (!isPhysicalCluster && original.Length == 1)
         {
-            if (_fallback.IsCommonWord(original, originalLanguage)) return WordConversionDecision.HardKeep;
-            if (_fallback.IsCommonWord(converted, convertedLanguage)) return WordConversionDecision.ConfidentConvert;
+            return originalIsCommon && !convertedIsCommon
+                ? WordConversionDecision.ConfidentKeep
+                : WordConversionDecision.Ambiguous;
         }
 
-        var originalValidity = _windowsSpellChecker?.IsValid(original, originalLanguage);
-        var convertedValidity = _windowsSpellChecker?.IsValid(converted, convertedLanguage);
+        if (isPhysicalCluster && convertedIsCommon &&
+            convertedScore + conversionEvidenceBonus >= originalScore + 3)
+        {
+            return WordConversionDecision.ConfidentConvert;
+        }
 
-        if (originalValidity is true) return WordConversionDecision.HardKeep;
+        var originalValidity = _languageScorer?.IsValid(original, originalLanguage);
+        var convertedValidity = _languageScorer?.IsValid(converted, convertedLanguage);
+
+        if (originalValidity is true)
+        {
+            return original.Length <= 3 && convertedIsCommon && convertedScore > originalScore
+                ? WordConversionDecision.Ambiguous
+                : WordConversionDecision.ConfidentKeep;
+        }
+
         if (originalValidity is false && convertedValidity is true) return WordConversionDecision.ConfidentConvert;
         if (originalValidity is null && convertedValidity is true) return WordConversionDecision.ConfidentConvert;
 
-        var originalScore = _fallback.Score(original, originalLanguage);
-        var convertedScore = _fallback.Score(converted, convertedLanguage);
         if (convertedScore + conversionEvidenceBonus >= originalScore + 3) return WordConversionDecision.ConfidentConvert;
-        if (originalScore >= convertedScore + 3) return WordConversionDecision.HardKeep;
+        if (originalScore >= convertedScore + 3) return WordConversionDecision.ConfidentKeep;
         return WordConversionDecision.Ambiguous;
     }
 
@@ -64,6 +88,12 @@ internal sealed class MixedWordDecider
 
 internal static class TechnicalTokenDetector
 {
+    private static readonly System.Text.RegularExpressions.Regex EmailPattern = new(
+        @"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+",
+        System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+    private static readonly System.Text.RegularExpressions.Regex UrlPattern = new(
+        @"\bhttps?://[^\s]+",
+        System.Text.RegularExpressions.RegexOptions.CultureInvariant | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     private static readonly HashSet<string> ProtectedWords = new(StringComparer.OrdinalIgnoreCase)
     {
         "std", "string", "int", "char", "bool", "void", "const", "auto", "return", "class",
@@ -95,18 +125,16 @@ internal static class TechnicalTokenDetector
 
     internal static bool IsKnownProtectedWord(string word) => ProtectedWords.Contains(word);
 
-    private static bool BelongsToEmailOrUrl(string text, int start, int end)
+    internal static bool BelongsToEmailOrUrl(string text, int start, int end)
     {
-        var clusterStart = start;
-        while (clusterStart > 0 && !char.IsWhiteSpace(text[clusterStart - 1])) clusterStart--;
-        var clusterEnd = end;
-        while (clusterEnd < text.Length && !char.IsWhiteSpace(text[clusterEnd])) clusterEnd++;
-        var cluster = text[clusterStart..clusterEnd];
-        var at = cluster.IndexOf('@');
-        var looksLikeEmail = at > 0 && at + 1 < cluster.Length &&
-            char.IsLetterOrDigit(cluster[at - 1]) && char.IsLetterOrDigit(cluster[at + 1]);
-        return looksLikeEmail || cluster.Contains("://", StringComparison.Ordinal);
+        return ContainsSpan(EmailPattern, text, start, end) || ContainsSpan(UrlPattern, text, start, end);
     }
+
+    private static bool ContainsSpan(
+        System.Text.RegularExpressions.Regex pattern,
+        string text,
+        int start,
+        int end) => pattern.Matches(text).Any(match => match.Index <= start && end <= match.Index + match.Length);
 }
 
 internal sealed class DeterministicWordLanguageScorer
@@ -118,7 +146,7 @@ internal sealed class DeterministicWordLanguageScorer
 
     private static readonly HashSet<string> CommonRussian = new(StringComparer.OrdinalIgnoreCase)
     {
-        "а", "в", "вы", "всегда", "дела", "делать", "и", "к", "как", "мне", "могу", "мы", "на", "не", "о", "он", "она", "привет", "с", "текст", "ты", "у", "что", "это", "я"
+        "а", "в", "всё", "вуз", "вы", "всегда", "где", "да", "дальше", "дела", "делать", "до", "её", "же", "за", "и", "из", "к", "как", "ли", "мне", "могу", "мы", "на", "не", "но", "о", "ок", "он", "она", "от", "по", "привет", "с", "так", "текст", "то", "ты", "у", "уже", "что", "это", "я"
     };
 
     private const string EnglishBigrams = "th he in er an re on at en nd ti es or te of ed is it al ar st to nt ng se ha as ou io le ve co me de hi ri ro ic ne ea ra ce li ch ll be ma si om ur wo rl ld yo";

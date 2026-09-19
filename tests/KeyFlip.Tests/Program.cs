@@ -25,6 +25,8 @@ try
     codeSafeConversionTests.Run();
     var smartContextRegressionTests = new SmartContextRegressionTests();
     smartContextRegressionTests.Run();
+    var wordLanguageScorerTests = new WordLanguageScorerTests();
+    wordLanguageScorerTests.Run();
     var wordConversionTests = new WordConversionTests();
     wordConversionTests.Run();
     var hotkeyManagerTests = new HotkeyManagerTests();
@@ -33,7 +35,7 @@ try
     buildInfoTests.Run();
     var diagnosticLoggerTests = new DiagnosticLoggerTests();
     diagnosticLoggerTests.Run();
-    Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + startupManagerTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed + codeSafeConversionTests.Passed + smartContextRegressionTests.Passed + wordConversionTests.Passed + hotkeyManagerTests.Passed + buildInfoTests.Passed + diagnosticLoggerTests.Passed}");
+    Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + startupManagerTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed + codeSafeConversionTests.Passed + smartContextRegressionTests.Passed + wordLanguageScorerTests.Passed + wordConversionTests.Passed + hotkeyManagerTests.Passed + buildInfoTests.Passed + diagnosticLoggerTests.Passed}");
     return 0;
 }
 catch (Exception exception)
