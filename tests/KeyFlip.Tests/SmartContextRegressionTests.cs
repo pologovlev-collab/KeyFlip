@@ -156,6 +156,12 @@ internal sealed class SmartContextRegressionTests
         var scorer = FakeLanguageScorer.RecognizesEnglish("GHBDTN", "codwars");
         Equal("ПРИВЕТ", LayoutConverter.ConvertWithScorer("GHBDTN", scorer), "single-wrong-layout");
         Equal("codwars", LayoutConverter.ConvertWithScorer("codwars", scorer), "single-english-word");
+
+        var clusterScorer = FakeLanguageScorer.RecognizesEnglish("et");
+        Equal(
+            "привет как хуже",
+            LayoutConverter.ConvertWithScorer("ghbdtn rfr [e;t", clusterScorer),
+            "spell-valid-physical-cluster");
     }
 
     private void ConvertsLongContextRegressions()

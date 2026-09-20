@@ -626,8 +626,9 @@ public static class LayoutConverter
         {
             if (characterIndex >= word.Start && characterIndex < word.End) continue;
             if (direction == ConversionDirection.EnglishToRussian &&
-                characterIndex >= word.End &&
-                text[characterIndex] == '/')
+                (characterIndex >= word.End && text[characterIndex] == '/' ||
+                 GetMap(direction).TryGetValue(text[characterIndex], out var semantic) &&
+                 GetLanguage(semantic) == WordLanguage.Russian))
             {
                 return true;
             }
