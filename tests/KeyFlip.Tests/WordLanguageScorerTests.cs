@@ -9,7 +9,7 @@ internal sealed class WordLanguageScorerTests
     public void Run()
     {
         SingleLetterWithValidTargetIsAmbiguous();
-        ShortWordValidInBothLanguagesIsAmbiguous();
+        DeterministicConversionOutranksValidityInBothLanguages();
         PhysicalClusterCanOverrideValidSourceWord();
         PhysicalClusterEvidenceOutranksSpellValidity();
         WeakSpellValidityDefersToClauseContext();
@@ -26,12 +26,12 @@ internal sealed class WordLanguageScorerTests
             decider.Decide("B", WordLanguage.English, "И", WordLanguage.Russian));
     }
 
-    private void ShortWordValidInBothLanguagesIsAmbiguous()
+    private void DeterministicConversionOutranksValidityInBothLanguages()
     {
         var decider = new MixedWordDecider(new FixedScorer(originalValid: true, convertedValid: true));
 
         Equal(
-            WordConversionDecision.Ambiguous,
+            WordConversionDecision.ConfidentConvert,
             decider.Decide("kb", WordLanguage.English, "ли", WordLanguage.Russian));
     }
 

@@ -54,8 +54,7 @@ internal sealed class MixedWordDecider
                 : WordConversionDecision.Ambiguous;
         }
 
-        if (isPhysicalCluster &&
-            convertedScore + conversionEvidenceBonus >= originalScore + 3)
+        if (convertedScore + conversionEvidenceBonus >= originalScore + 3)
         {
             return WordConversionDecision.ConfidentConvert;
         }
@@ -79,11 +78,6 @@ internal sealed class MixedWordDecider
             return hasStrongOriginalEvidence
                 ? WordConversionDecision.ConfidentKeep
                 : WordConversionDecision.ConfidentConvert;
-        }
-
-        if (convertedScore + conversionEvidenceBonus >= originalScore + 3)
-        {
-            return WordConversionDecision.ConfidentConvert;
         }
 
         if (originalScore >= convertedScore + 3)
