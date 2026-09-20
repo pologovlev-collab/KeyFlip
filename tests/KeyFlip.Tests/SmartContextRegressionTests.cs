@@ -86,6 +86,7 @@ internal sealed class SmartContextRegressionTests
         ConvertsLongContextRegressions();
         ConvertsCriticalCorpusWithoutDictionaryDependency();
         PreservesSpellValidatedClauseEdgeIsland();
+        IgnoresSpellValidityForSingleWrongLayoutToken();
         ReportsDecisionEvidenceForLongFailures();
         ConvertsPhysicalClustersAtomically();
         PreservesTrueContextBoundaries();
@@ -148,6 +149,13 @@ internal sealed class SmartContextRegressionTests
             LayoutConverter.ConvertWithScorer("ghbdtn rfr ltkf project?", scorer),
             "punctuated-english-island-at-clause-edge");
         Equal("project", LayoutConverter.ConvertWithScorer("project", scorer), "single-english-island");
+    }
+
+    private void IgnoresSpellValidityForSingleWrongLayoutToken()
+    {
+        var scorer = FakeLanguageScorer.RecognizesEnglish("GHBDTN", "codwars");
+        Equal("ПРИВЕТ", LayoutConverter.ConvertWithScorer("GHBDTN", scorer), "single-wrong-layout");
+        Equal("codwars", LayoutConverter.ConvertWithScorer("codwars", scorer), "single-english-word");
     }
 
     private void ConvertsLongContextRegressions()

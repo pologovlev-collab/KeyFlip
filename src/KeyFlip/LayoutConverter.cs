@@ -42,6 +42,7 @@ public static class LayoutConverter
     private const string StrongRussianSymbols = "№";
     private const string EnglishWordClusterSymbols = "`[];',./?";
     private static readonly Lazy<MixedWordDecider> MixedDecider = new(static () => new MixedWordDecider());
+    private static readonly MixedWordDecider DeterministicDecider = new(null);
     private static readonly IReadOnlyDictionary<char, char> EnglishToRussian = CreateMap(
         ("`~", "ёЁ"),
         ("1!", "1!"), ("2@", "2\""), ("3#", "3№"), ("4$", "4;"), ("5%", "5%"),
@@ -82,7 +83,7 @@ public static class LayoutConverter
 
         var tokenCount = CountAlphabeticTokens(text);
         if (tokenCount == 0) return ConvertSymbolOnly(text);
-        if (tokenCount == 1) return ConvertSingleToken(text, decider);
+        if (tokenCount == 1) return ConvertSingleToken(text);
         return ConvertSmart(text, decider);
     }
 
@@ -134,7 +135,7 @@ public static class LayoutConverter
         return ConversionResult.FromEdits(text, edits);
     }
 
-    private static string ConvertSingleToken(string text, MixedWordDecider decider)
+    private static string ConvertSingleToken(string text)
     {
         for (var index = 0; index < text.Length; index++)
         {
@@ -158,7 +159,7 @@ public static class LayoutConverter
                 return ConvertWithMap(text, GetMap(direction));
             }
 
-            return decider.Decide(original, language.Value, converted, convertedLanguage) is
+            return DeterministicDecider.Decide(original, language.Value, converted, convertedLanguage) is
                 WordConversionDecision.ConfidentKeep or
                 WordConversionDecision.LexicalKeep or
                 WordConversionDecision.ContextualKeep

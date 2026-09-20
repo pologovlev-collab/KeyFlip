@@ -44,8 +44,9 @@ internal static class ConversionDebugAnalyzer
     internal static ConversionDebugResult Analyze(string text, IWordLanguageScorer? scorer)
     {
         var output = LayoutConverter.ConvertWithScorer(text, scorer);
-        var decider = new MixedWordDecider(scorer);
-        var tokens = Tokenize(text, decider, scorer);
+        var effectiveScorer = CountAlphabeticTokens(text) <= 1 ? null : scorer;
+        var decider = new MixedWordDecider(effectiveScorer);
+        var tokens = Tokenize(text, decider, effectiveScorer);
         var debugTokens = new List<ConversionTokenDebug>(tokens.Count);
 
         for (var index = 0; index < tokens.Count; index++)
@@ -289,6 +290,25 @@ internal static class ConversionDebugAnalyzer
         if (character is >= 'A' and <= 'Z' or >= 'a' and <= 'z') return WordLanguage.English;
         if (IsRussianLetter(character)) return WordLanguage.Russian;
         return null;
+    }
+
+    private static int CountAlphabeticTokens(string text)
+    {
+        var count = 0;
+        for (var index = 0; index < text.Length;)
+        {
+            var language = GetLanguage(text[index]);
+            if (language is null)
+            {
+                index++;
+                continue;
+            }
+
+            count++;
+            while (index < text.Length && GetLanguage(text[index]) == language) index++;
+        }
+
+        return count;
     }
 
     private static bool IsContextualNumericSuffix(
