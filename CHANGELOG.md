@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1-rc3 (pre-release)
+
+- Fixed clipboard transactions being cancelled by optional unsupported formats in an otherwise restorable clipboard.
+- Added complete, partial, empty, and unusable clipboard snapshot handling with content-free diagnostics.
+- Kept restored streams, images, file drops, text, and other supported values independent from snapshot disposal.
+- Improved long mixed-layout prose conversion with direction-aware punctuation, atomic physical clusters, and local clause evidence for typo-containing words.
+- Expanded clipboard and long-context regression coverage.
+
 ## 1.0.0
 
 - Initial public release.

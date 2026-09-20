@@ -28,6 +28,10 @@ internal sealed class SmartContextRegressionTests
         ConvertsTesterFailure("z yt gjybvf.", "я не понимаю");
         ConvertsTesterFailure("rfr ;t vyt", "как же мне");
 
+        ConvertsLongContextRegressions();
+        ConvertsPhysicalClustersAtomically();
+        PreservesTrueContextBoundaries();
+
         Converts("dc`", "всё");
         Converts("e;t", "уже");
         Converts(";t", "же");
@@ -44,6 +48,8 @@ internal sealed class SmartContextRegressionTests
         Converts("SQL и ghbdtn", "SQL и привет");
         Unchanged("я use API");
         Unchanged("он исправил проблему с отображением уровня и названия задач с codwars");
+        Converts("ghbdtn green banana rfr ltkf", "привет green banana как дела");
+        Converts("source. ghbdtn rfr ltkf", "source. привет как дела");
         Unchanged("API работает");
         Unchanged("Use SQL and HTTP in this project");
         Unchanged("test@example.com");
@@ -70,6 +76,33 @@ internal sealed class SmartContextRegressionTests
         Unchanged("B2 level");
         Unchanged("H2O molecule");
         Unchanged("Win32 API");
+    }
+
+    private void ConvertsLongContextRegressions()
+    {
+        Converts(
+            "z yt gjybvf. gjxtve d hjccbb nfr ckj;yj gjkexbnm yjhvfkmye. hf,jne? gj rfrjq ghbxbyt vyt yt [jnzn lfdfnm yjhvfkmyjt j,jpjdfybt b gjxtve jyb gsnf.ncz cltkfnm vj. ;bpm [e;t bp lyz d ltym c rf;lsv lytv dc` [e;t b [e;t ?",
+            "я не понимаю почему в россии так сложно получить нормальную работу, по какой причине мне не хотят давать нормальное обозование и почему они пытаются сделать мою жизь хуже из дня в день с каждым днем всё хуже и хуже ,");
+        Converts(
+            "z ,s [jntk gjghj,jdfnm gj;bnm d lheujq cnhfyt d yflt;lt yf kextt yflt.cm r vjtve dsgecre bp depf dc` d vbht cnfytn cbkmyj ghjot b dbpe gjkexbnm nj;t eltn cbkmyj ghjot ?nen ukfdyjt dthbnm d ecg[ b yfltznmcz yf kexitt/",
+            "я бы хотел попробовать пожить в другой стране в надежде на лучее надеюсь к моему выпуску из вуза всё в мире станет сильно проще и визу получить тоже удет сильно проще ,тут главное верить в успх и надеяться на лучшее.");
+        Converts("yf kextt yflt.cm", "на лучее надеюсь");
+        Converts("d yflt;lt yf kextt yflt.cm r vjtve", "в надежде на лучее надеюсь к моему");
+    }
+
+    private void ConvertsPhysicalClustersAtomically()
+    {
+        Converts("cltkfnm vj. ;bpm [e;t bp lyz", "сделать мою жизь хуже из дня");
+        Converts("vj. ;bpm [e;t", "мою жизь хуже");
+        Converts("hf,jne? gj rfrjq ghbxbyt", "работу, по какой причине");
+    }
+
+    private void PreservesTrueContextBoundaries()
+    {
+        Unchanged("hello world. B");
+        Unchanged("как дела. SQL");
+        Converts("ntgthm vtyz! B", "теперь меня! B");
+        Converts("ghbdtn\nhello", "привет\nhello");
     }
 
     private void ConvertsFullTesterCorpus()

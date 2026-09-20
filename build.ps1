@@ -2,11 +2,11 @@ $ErrorActionPreference = 'Stop'
 $solution = Join-Path $PSScriptRoot 'KeyFlip.sln'
 $applicationProject = Join-Path $PSScriptRoot 'src\KeyFlip\KeyFlip.csproj'
 $testProject = Join-Path $PSScriptRoot 'tests\KeyFlip.Tests\KeyFlip.Tests.csproj'
-$releaseDirectory = Join-Path $PSScriptRoot 'artifacts\release\win-x64'
-$publishDirectory = Join-Path $PSScriptRoot 'artifacts\release\.publish-win-x64'
+$candidateVersion = 'v1.0.1-rc3'
+$releaseDirectory = Join-Path $PSScriptRoot "artifacts\candidates\$candidateVersion"
+$publishDirectory = Join-Path $PSScriptRoot "artifacts\candidates\.$candidateVersion-publish-win-x64"
 $releaseFileName = 'KeyFlip_windows_x64.exe'
 $releaseExecutable = Join-Path $releaseDirectory $releaseFileName
-$checksumFile = Join-Path $releaseDirectory 'SHA256SUMS.txt'
 $runtime = 'win-x64'
 $sourceRevision = 'unknown'
 
@@ -67,14 +67,13 @@ Copy-Item -LiteralPath $publishedExecutable -Destination $releaseExecutable
 Remove-Item -LiteralPath $publishDirectory -Recurse -Force
 
 $hash = (Get-FileHash -LiteralPath $releaseExecutable -Algorithm SHA256).Hash
-Set-Content -LiteralPath $checksumFile -Value "$hash  $releaseFileName" -Encoding ASCII
 
 $actualFiles = @(Get-ChildItem -LiteralPath $releaseDirectory -File | Select-Object -ExpandProperty Name | Sort-Object)
-$expectedFiles = @($releaseFileName, 'SHA256SUMS.txt') | Sort-Object
+$expectedFiles = @($releaseFileName)
 if (Compare-Object -ReferenceObject $expectedFiles -DifferenceObject $actualFiles) {
     throw "Release directory contains unexpected or missing files: $($actualFiles -join ', ')"
 }
 
-Write-Host "Final release created: $releaseExecutable"
-Write-Host "Version: 1.0.0; commit: $sourceRevision"
+Write-Host "Candidate created: $releaseExecutable"
+Write-Host "Version: 1.0.1-rc3; commit: $sourceRevision"
 Write-Host "SHA-256: $hash"

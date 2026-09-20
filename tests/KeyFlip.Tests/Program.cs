@@ -13,6 +13,8 @@ try
     conversionGuardTests.Run();
     var clipboardSnapshotTests = new ClipboardSnapshotTests();
     clipboardSnapshotTests.Run();
+    var clipboardServiceTests = new ClipboardServiceTests();
+    await clipboardServiceTests.RunAsync();
     var settingsServiceTests = new SettingsServiceTests();
     settingsServiceTests.Run();
     var startupManagerTests = new StartupManagerTests();
@@ -35,7 +37,7 @@ try
     buildInfoTests.Run();
     var diagnosticLoggerTests = new DiagnosticLoggerTests();
     diagnosticLoggerTests.Run();
-    Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + settingsServiceTests.Passed + startupManagerTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed + codeSafeConversionTests.Passed + smartContextRegressionTests.Passed + wordLanguageScorerTests.Passed + wordConversionTests.Passed + hotkeyManagerTests.Passed + buildInfoTests.Passed + diagnosticLoggerTests.Passed}");
+    Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + clipboardServiceTests.Passed + settingsServiceTests.Passed + startupManagerTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed + codeSafeConversionTests.Passed + smartContextRegressionTests.Passed + wordLanguageScorerTests.Passed + wordConversionTests.Passed + hotkeyManagerTests.Passed + buildInfoTests.Passed + diagnosticLoggerTests.Passed}");
     return 0;
 }
 catch (Exception exception)

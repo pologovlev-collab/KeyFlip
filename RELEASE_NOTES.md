@@ -1,18 +1,18 @@
-# KeyFlip v1.0.0
+# KeyFlip v1.0.1-rc3
 
-KeyFlip fixes selected text typed using the wrong Russian/English keyboard layout. Select text and press `Ctrl+Shift+K`.
+Testing pre-release for KeyFlip. Stable v1.0.0 remains the recommended stable download.
 
-Highlights:
+Changes in this candidate:
 
-- Smart RU ↔ EN conversion with the complete physical keyboard and symbol mapping.
-- Code-aware conversion that preserves existing syntax and can recover confidently detected wrong-layout syntax.
-- Formatting-preserving Microsoft Word replacements.
-- File Explorer filename conversion, including names with spaces, while preserving the final extension.
-- Clipboard preservation, terminal and protected-field exclusion, tray settings, and Windows autostart.
-- Fully local and offline: no AI, account, network communication, telemetry, or analytics.
+- Fixed clipboard conversion when the clipboard already contains data.
+- Made clipboard snapshots robust to optional unsupported formats while preserving meaningful restorable data.
+- Kept original clipboard restoration in the transaction cleanup path.
+- Improved long mixed-layout prose conversion.
+- Made punctuation boundaries aware of the candidate keyboard-layout direction.
+- Made physical word-cluster conversion atomic.
+- Added local clause evidence for long ambiguous words containing user typos, without spell-correcting them.
+- Expanded clipboard and long-context regression coverage.
 
 Download `KeyFlip_windows_x64.exe`. It is a self-contained, untrimmed, single-file build for Windows 10/11 x64 and does not require a separate .NET runtime installation.
 
-SHA-256: `963631ECF8C2FE0A7ACC47779AC0D72ACE76B2E5D4EB634AC6F910A075AC0AC0`
-
-Known limitations: elevated applications may reject synthetic input; protected password controls and terminals are intentionally ignored; rare clipboard formats cause a safe abort; Windows ARM64 is not yet tested and has no native build; Windows 7, Linux, and macOS are not supported. Mixed formatting inside one individual Microsoft Word word may become uniform.
+The SHA-256 checksum is included in the GitHub release description. Unsupported-only or otherwise non-restorable clipboard data still causes a safe abort before KeyFlip changes the clipboard.

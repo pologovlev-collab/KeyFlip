@@ -70,7 +70,12 @@ internal sealed class MixedWordDecider
         if (originalValidity is null && convertedValidity is true) return WordConversionDecision.ConfidentConvert;
 
         if (convertedScore + conversionEvidenceBonus >= originalScore + 3) return WordConversionDecision.ConfidentConvert;
-        if (originalScore >= convertedScore + 3) return WordConversionDecision.ConfidentKeep;
+        if (originalScore >= convertedScore + 3)
+        {
+            return originalScore <= 1 && _fallback.HasPlausibleVowelPattern(converted, convertedLanguage)
+                ? WordConversionDecision.Ambiguous
+                : WordConversionDecision.ConfidentKeep;
+        }
         return WordConversionDecision.Ambiguous;
     }
 
@@ -176,6 +181,13 @@ internal sealed class DeterministicWordLanguageScorer
 
     internal bool IsCommonWord(string word, WordLanguage language) =>
         (language == WordLanguage.English ? CommonEnglish : CommonRussian).Contains(word);
+
+    internal bool HasPlausibleVowelPattern(string word, WordLanguage language)
+    {
+        var vowelCount = word.Count(character => IsVowel(char.ToLowerInvariant(character), language));
+        var minimumVowels = word.Length >= 4 ? 2 : 1;
+        return vowelCount >= minimumVowels;
+    }
 
     private static bool IsLanguageLetter(char character, WordLanguage language) => language == WordLanguage.English
         ? character is >= 'a' and <= 'z'
