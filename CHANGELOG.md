@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1-rc4 (pre-release)
+
+- Made long mixed-layout conversion deterministic when Windows spell-check dictionaries are absent or only partially available.
+- Added explicit clause-direction resolution while preserving hard technical tokens and strongly supported English islands.
+- Ensured physical-cluster evidence is evaluated before optional spell-check validity, preventing partial or retained wrong-layout clusters.
+- Added scorer-mode regression matrices and a development-only converter trace tool.
+- Hardened release builds against stale assemblies and dirty production inputs.
+
 ## 1.0.1-rc3 (pre-release)
 
 - Fixed clipboard transactions being cancelled by optional unsupported formats in an otherwise restorable clipboard.

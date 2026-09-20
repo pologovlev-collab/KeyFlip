@@ -9,6 +9,8 @@ internal enum WordLanguage
 internal enum WordConversionDecision
 {
     ConfidentConvert,
+    LexicalKeep,
+    ContextualKeep,
     ConfidentKeep,
     HardKeep,
     Ambiguous
@@ -42,6 +44,8 @@ internal sealed class MixedWordDecider
         var convertedIsCommon = _fallback.IsCommonWord(converted, convertedLanguage);
         var originalScore = _fallback.Score(original, originalLanguage);
         var convertedScore = _fallback.Score(converted, convertedLanguage);
+        var originalValidity = _languageScorer?.IsValid(original, originalLanguage);
+        var convertedValidity = _languageScorer?.IsValid(converted, convertedLanguage);
 
         if (!isPhysicalCluster && original.Length == 1)
         {
@@ -50,31 +54,43 @@ internal sealed class MixedWordDecider
                 : WordConversionDecision.Ambiguous;
         }
 
-        if (isPhysicalCluster && convertedIsCommon &&
+        if (isPhysicalCluster &&
             convertedScore + conversionEvidenceBonus >= originalScore + 3)
         {
             return WordConversionDecision.ConfidentConvert;
         }
 
-        var originalValidity = _languageScorer?.IsValid(original, originalLanguage);
-        var convertedValidity = _languageScorer?.IsValid(converted, convertedLanguage);
+        var hasStrongOriginalEvidence = originalIsCommon || originalScore >= convertedScore + 5;
 
         if (originalValidity is true)
         {
-            return original.Length <= 3 && convertedIsCommon && convertedScore > originalScore
-                ? WordConversionDecision.Ambiguous
-                : WordConversionDecision.ConfidentKeep;
+            if (original.Length <= 3 && convertedIsCommon && convertedScore > originalScore)
+            {
+                return WordConversionDecision.Ambiguous;
+            }
+
+            return hasStrongOriginalEvidence
+                ? WordConversionDecision.ConfidentKeep
+                : WordConversionDecision.LexicalKeep;
         }
 
-        if (originalValidity is false && convertedValidity is true) return WordConversionDecision.ConfidentConvert;
-        if (originalValidity is null && convertedValidity is true) return WordConversionDecision.ConfidentConvert;
+        if (convertedValidity is true)
+        {
+            return hasStrongOriginalEvidence
+                ? WordConversionDecision.ConfidentKeep
+                : WordConversionDecision.ConfidentConvert;
+        }
 
-        if (convertedScore + conversionEvidenceBonus >= originalScore + 3) return WordConversionDecision.ConfidentConvert;
+        if (convertedScore + conversionEvidenceBonus >= originalScore + 3)
+        {
+            return WordConversionDecision.ConfidentConvert;
+        }
+
         if (originalScore >= convertedScore + 3)
         {
-            return originalScore <= 1 && _fallback.HasPlausibleVowelPattern(converted, convertedLanguage)
-                ? WordConversionDecision.Ambiguous
-                : WordConversionDecision.ConfidentKeep;
+            return hasStrongOriginalEvidence
+                ? WordConversionDecision.ConfidentKeep
+                : WordConversionDecision.ContextualKeep;
         }
         return WordConversionDecision.Ambiguous;
     }
@@ -103,7 +119,7 @@ internal static class TechnicalTokenDetector
     {
         "std", "string", "int", "char", "bool", "void", "const", "auto", "return", "class",
         "namespace", "public", "private", "protected", "include",
-        "api", "url", "uri", "http", "https", "html", "css", "sql", "json", "xml", "gpt",
+        "api", "url", "uri", "email", "http", "https", "html", "css", "sql", "json", "xml", "gpt",
         "cpu", "gpu", "ram", "ssd", "hdd", "ide", "cli", "sdk", "ui", "ux", "utf", "ascii",
         "tcp", "udp", "ip", "dns", "ssh", "ssl", "tls", "rest", "rpc", "jwt", "uuid", "guid",
         "os", "db"

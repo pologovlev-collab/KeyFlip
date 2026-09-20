@@ -11,6 +11,9 @@ internal sealed class WordLanguageScorerTests
         SingleLetterWithValidTargetIsAmbiguous();
         ShortWordValidInBothLanguagesIsAmbiguous();
         PhysicalClusterCanOverrideValidSourceWord();
+        PhysicalClusterEvidenceOutranksSpellValidity();
+        WeakSpellValidityDefersToClauseContext();
+        StrongDeterministicEnglishEvidenceStaysKeptWithoutDictionary();
         ClearlyValidSourceWordIsConfidentKeep();
     }
 
@@ -45,6 +48,39 @@ internal sealed class WordLanguageScorerTests
                 WordLanguage.Russian,
                 conversionEvidenceBonus: 4,
                 isPhysicalCluster: true));
+    }
+
+    private void PhysicalClusterEvidenceOutranksSpellValidity()
+    {
+        var decider = new MixedWordDecider(new FixedScorer(originalValid: true, convertedValid: false));
+
+        Equal(
+            WordConversionDecision.ConfidentConvert,
+            decider.Decide(
+                "bpm",
+                WordLanguage.English,
+                "жизь",
+                WordLanguage.Russian,
+                conversionEvidenceBonus: 4,
+                isPhysicalCluster: true));
+    }
+
+    private void WeakSpellValidityDefersToClauseContext()
+    {
+        var decider = new MixedWordDecider(new FixedScorer(originalValid: true, convertedValid: false));
+
+        Equal(
+            WordConversionDecision.LexicalKeep,
+            decider.Decide("vjtve", WordLanguage.English, "моему", WordLanguage.Russian));
+    }
+
+    private void StrongDeterministicEnglishEvidenceStaysKeptWithoutDictionary()
+    {
+        var decider = new MixedWordDecider(null);
+
+        Equal(
+            WordConversionDecision.ConfidentKeep,
+            decider.Decide("source", WordLanguage.English, "ыщгксу", WordLanguage.Russian));
     }
 
     private void ClearlyValidSourceWordIsConfidentKeep()

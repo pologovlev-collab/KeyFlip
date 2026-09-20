@@ -1,6 +1,11 @@
 using KeyFlip;
 using KeyFlip.Tests;
 
+if (args.FirstOrDefault() == "--convert-debug")
+{
+    return ConversionDebugTool.Run(args);
+}
+
 try
 {
     var tests = new LayoutConverterTests();
@@ -37,6 +42,7 @@ try
     buildInfoTests.Run();
     var diagnosticLoggerTests = new DiagnosticLoggerTests();
     diagnosticLoggerTests.Run();
+    Console.WriteLine($"Windows scorer: {(smartContextRegressionTests.WindowsScorerAvailable ? "available and tested" : "unavailable; explicit matrix case skipped")}");
     Console.WriteLine($"Passed: {tests.Passed + nativeInteropTests.Passed + inputSimulatorTests.Passed + conversionGuardTests.Passed + clipboardSnapshotTests.Passed + clipboardServiceTests.Passed + settingsServiceTests.Passed + startupManagerTests.Passed + focusedContextClassifierTests.Passed + fileNameConverterTests.Passed + codeSafeConversionTests.Passed + smartContextRegressionTests.Passed + wordLanguageScorerTests.Passed + wordConversionTests.Passed + hotkeyManagerTests.Passed + buildInfoTests.Passed + diagnosticLoggerTests.Passed}");
     return 0;
 }

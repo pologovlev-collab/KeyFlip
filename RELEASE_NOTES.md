@@ -1,17 +1,15 @@
-# KeyFlip v1.0.1-rc3
+# KeyFlip v1.0.1-rc4
 
 Testing pre-release for KeyFlip. Stable v1.0.0 remains the recommended stable download.
 
 Changes in this candidate:
 
-- Fixed clipboard conversion when the clipboard already contains data.
-- Made clipboard snapshots robust to optional unsupported formats while preserving meaningful restorable data.
-- Kept original clipboard restoration in the transaction cleanup path.
-- Improved long mixed-layout prose conversion.
-- Made punctuation boundaries aware of the candidate keyboard-layout direction.
-- Made physical word-cluster conversion atomic.
-- Added local clause evidence for long ambiguous words containing user typos, without spell-correcting them.
-- Expanded clipboard and long-context regression coverage.
+- Preserves the RC3 clipboard transaction fixes and restoration safeguards.
+- Fixes long mixed-layout prose when Windows spell-check dictionaries are missing or only partly available.
+- Uses explicit clause direction to resolve ambiguous and typo-containing wrong-layout tokens without correcting their spelling.
+- Keeps physical clusters atomic and protects technical tokens and strongly supported English islands.
+- Adds deterministic no-scorer, English-only, Russian-only, and both-language scorer coverage; the trace tool reports whether the optional Windows scorer is available.
+- Adds a development-only conversion trace and stale-build release guards.
 
 Download `KeyFlip_windows_x64.exe`. It is a self-contained, untrimmed, single-file build for Windows 10/11 x64 and does not require a separate .NET runtime installation.
 

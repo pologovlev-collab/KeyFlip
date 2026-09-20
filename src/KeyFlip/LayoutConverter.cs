@@ -15,6 +15,8 @@ public static class LayoutConverter
     {
         ConfidentConvert,
         ContextConvert,
+        LexicalKeep,
+        ContextualKeep,
         ConfidentKeep,
         HardKeep,
         Ambiguous
@@ -69,13 +71,19 @@ public static class LayoutConverter
         ("nN", "тТ"), ("mM", "ьЬ"), (",<", "бБ"), (".>", "юЮ"), ("/?", ".,"));
 
     public static string Convert(string text)
+        => Convert(text, MixedDecider.Value);
+
+    internal static string ConvertWithScorer(string text, IWordLanguageScorer? scorer)
+        => Convert(text, new MixedWordDecider(scorer));
+
+    private static string Convert(string text, MixedWordDecider decider)
     {
         ArgumentNullException.ThrowIfNull(text);
 
         var tokenCount = CountAlphabeticTokens(text);
         if (tokenCount == 0) return ConvertSymbolOnly(text);
-        if (tokenCount == 1) return ConvertSingleToken(text);
-        return ConvertSmart(text);
+        if (tokenCount == 1) return ConvertSingleToken(text, decider);
+        return ConvertSmart(text, decider);
     }
 
     internal static ConversionResult ConvertCodeSafe(string text) =>
@@ -126,7 +134,7 @@ public static class LayoutConverter
         return ConversionResult.FromEdits(text, edits);
     }
 
-    private static string ConvertSingleToken(string text)
+    private static string ConvertSingleToken(string text, MixedWordDecider decider)
     {
         for (var index = 0; index < text.Length; index++)
         {
@@ -135,16 +143,40 @@ public static class LayoutConverter
 
             var start = index;
             while (index < text.Length && GetLanguage(text[index]) == language) index++;
-            if (TechnicalTokenDetector.IsKnownProtectedWord(text[start..index])) return text;
-            return ConvertWithMap(text, language == WordLanguage.English ? EnglishToRussian : RussianToEnglish);
+            var original = text[start..index];
+            if (TechnicalTokenDetector.IsKnownProtectedWord(original)) return text;
+
+            var direction = language == WordLanguage.English
+                ? ConversionDirection.EnglishToRussian
+                : ConversionDirection.RussianToEnglish;
+            var convertedLanguage = language == WordLanguage.English
+                ? WordLanguage.Russian
+                : WordLanguage.English;
+            var converted = ConvertWithMap(original, GetMap(direction));
+            if (language == WordLanguage.Russian || converted.All(character => GetLanguage(character) is null))
+            {
+                return ConvertWithMap(text, GetMap(direction));
+            }
+
+            return decider.Decide(original, language.Value, converted, convertedLanguage) is
+                WordConversionDecision.ConfidentKeep or
+                WordConversionDecision.LexicalKeep or
+                WordConversionDecision.ContextualKeep
+                    ? text
+                    : ConvertWithMap(text, GetMap(direction));
         }
 
         return text;
     }
 
-    private static string ConvertSmart(string text)
+    private static string ConvertSmart(string text, MixedWordDecider decider)
     {
-        var words = CreateWordTokens(text, preserveTechnicalTokens: true, forceSingleToken: false, conservative: false);
+        var words = CreateWordTokens(
+            text,
+            preserveTechnicalTokens: true,
+            forceSingleToken: false,
+            conservative: false,
+            decider: decider);
         ResolveAmbiguousTokens(text, words);
         ResolvePhysicalClusters(words);
         return ConvertWithTokens(text, words);
@@ -169,7 +201,12 @@ public static class LayoutConverter
 
         var trailingSeparator = text[words[^1].End..];
         var trailingDirection = words[^1].Direction;
-        if (trailingDirection == ConversionDirection.None && IsWrongLayoutTrailingPunctuation(trailingSeparator))
+        var keptEnglishWordOwnsTrailingPunctuation =
+            words[^1].CandidateDirection == ConversionDirection.EnglishToRussian &&
+            words[^1].Resolution is TokenResolution.ConfidentKeep or TokenResolution.LexicalKeep or TokenResolution.HardKeep;
+        if (trailingDirection == ConversionDirection.None &&
+            !keptEnglishWordOwnsTrailingPunctuation &&
+            IsWrongLayoutTrailingPunctuation(trailingSeparator))
         {
             trailingDirection = InferTrailingDirection(words);
         }
@@ -183,8 +220,10 @@ public static class LayoutConverter
         bool preserveTechnicalTokens,
         bool forceSingleToken,
         bool conservative,
-        bool protectIdentifierFragments = true)
+        bool protectIdentifierFragments = true,
+        MixedWordDecider? decider = null)
     {
+        decider ??= MixedDecider.Value;
         var words = new List<WordToken>();
         var evidenceDecisions = new Dictionary<(string Original, string Converted, WordLanguage Language, int Bonus), TokenResolution>();
         for (var index = 0; index < text.Length;)
@@ -241,6 +280,7 @@ public static class LayoutConverter
                 if (!evidenceDecisions.TryGetValue(evidenceKey, out resolution))
                 {
                     resolution = GetInitialResolution(
+                        decider,
                         original,
                         language.Value,
                         converted,
@@ -262,6 +302,7 @@ public static class LayoutConverter
                     if (!evidenceDecisions.TryGetValue(clusterKey, out var clusterResolution))
                     {
                         clusterResolution = GetInitialResolution(
+                            decider,
                             clusterOriginal,
                             language.Value,
                             clusterConverted,
@@ -371,6 +412,7 @@ public static class LayoutConverter
         language == WordLanguage.English && EnglishWordClusterSymbols.Contains(character, StringComparison.Ordinal);
 
     private static TokenResolution GetInitialResolution(
+        MixedWordDecider decider,
         string original,
         WordLanguage originalLanguage,
         string converted,
@@ -381,7 +423,7 @@ public static class LayoutConverter
     {
         if (conservative)
         {
-            return MixedDecider.Value.ShouldUseConvertedConservatively(
+            return decider.ShouldUseConvertedConservatively(
                 original,
                 originalLanguage,
                 converted,
@@ -390,7 +432,7 @@ public static class LayoutConverter
                 : TokenResolution.HardKeep;
         }
 
-        return MixedDecider.Value.Decide(
+        return decider.Decide(
             original,
             originalLanguage,
             converted,
@@ -399,6 +441,8 @@ public static class LayoutConverter
             isPhysicalCluster) switch
         {
             WordConversionDecision.ConfidentConvert => TokenResolution.ConfidentConvert,
+            WordConversionDecision.LexicalKeep => TokenResolution.LexicalKeep,
+            WordConversionDecision.ContextualKeep => TokenResolution.ContextualKeep,
             WordConversionDecision.ConfidentKeep => TokenResolution.ConfidentKeep,
             WordConversionDecision.HardKeep => TokenResolution.HardKeep,
             _ => TokenResolution.Ambiguous
@@ -409,7 +453,7 @@ public static class LayoutConverter
     {
         ResolveSandwichedSpans(text, words);
         ResolvePhraseEdges(text, words);
-        ResolveLongAmbiguousTokens(text, words);
+        ResolveClauseDirections(text, words);
     }
 
     private static void ResolveSandwichedSpans(string text, List<WordToken> words)
@@ -510,59 +554,85 @@ public static class LayoutConverter
         }
     }
 
-    private static void ResolveLongAmbiguousTokens(string text, List<WordToken> words)
+    private static void ResolveClauseDirections(string text, List<WordToken> words)
     {
-        const int LocalWindow = 8;
-        for (var index = 0; index < words.Count; index++)
+        ResolveClauseDirection(text, words, ConversionDirection.EnglishToRussian);
+        ResolveClauseDirection(text, words, ConversionDirection.RussianToEnglish);
+    }
+
+    private static void ResolveClauseDirection(
+        string text,
+        List<WordToken> words,
+        ConversionDirection direction)
+    {
+        for (var clauseStart = 0; clauseStart < words.Count;)
         {
-            var word = words[index];
-            if (word.Resolution != TokenResolution.Ambiguous || word.Length < 4)
+            if (words[clauseStart].Resolution == TokenResolution.HardKeep)
             {
+                clauseStart++;
                 continue;
+            }
+
+            var clauseEnd = clauseStart + 1;
+            while (clauseEnd < words.Count &&
+                   words[clauseEnd].Resolution != TokenResolution.HardKeep &&
+                   !HasContextBoundary(text, words, clauseEnd - 1, clauseEnd, direction))
+            {
+                clauseEnd++;
             }
 
             var supportingAnchors = 0;
             var opposingAnchors = 0;
-            var leftBlocked = false;
-            var rightBlocked = false;
-            for (var offset = 1; offset <= LocalWindow; offset++)
+            for (var index = clauseStart; index < clauseEnd; index++)
             {
-                var left = index - offset;
-                if (!leftBlocked && left >= 0)
-                {
-                    if (words[left].Resolution == TokenResolution.HardKeep ||
-                        HasContextBoundary(text, words, left, left + 1, word.CandidateDirection))
-                    {
-                        leftBlocked = true;
-                    }
-                    else if (IsLexicalAnchor(words[left]))
-                    {
-                        if (IsSupportingAnchor(words[left], word.CandidateDirection)) supportingAnchors++;
-                        else opposingAnchors++;
-                    }
-                }
-
-                var right = index + offset;
-                if (!rightBlocked && right < words.Count)
-                {
-                    if (words[right].Resolution == TokenResolution.HardKeep ||
-                        HasContextBoundary(text, words, right - 1, right, word.CandidateDirection))
-                    {
-                        rightBlocked = true;
-                    }
-                    else if (IsLexicalAnchor(words[right]))
-                    {
-                        if (IsSupportingAnchor(words[right], word.CandidateDirection)) supportingAnchors++;
-                        else opposingAnchors++;
-                    }
-                }
+                if (!IsLexicalAnchor(words[index])) continue;
+                if (IsSupportingAnchor(words[index], direction)) supportingAnchors++;
+                else opposingAnchors++;
             }
 
             if (supportingAnchors >= 2 && supportingAnchors >= opposingAnchors + 2)
             {
-                words[index] = word with { Resolution = TokenResolution.ContextConvert };
+                for (var index = clauseStart; index < clauseEnd; index++)
+                {
+                    var word = words[index];
+                    if (word.CandidateDirection == direction &&
+                        (word.Resolution is TokenResolution.Ambiguous or TokenResolution.ContextualKeep ||
+                         word.Resolution == TokenResolution.LexicalKeep &&
+                         ShouldPromoteLexicalKeep(text, words, index, clauseStart, clauseEnd, direction)))
+                    {
+                        words[index] = word with { Resolution = TokenResolution.ContextConvert };
+                    }
+                }
+            }
+
+            clauseStart = clauseEnd;
+        }
+    }
+
+    private static bool ShouldPromoteLexicalKeep(
+        string text,
+        IReadOnlyList<WordToken> words,
+        int index,
+        int clauseStart,
+        int clauseEnd,
+        ConversionDirection direction)
+    {
+        if (index > clauseStart && index + 1 < clauseEnd) return true;
+
+        var word = words[index];
+        if (word.ClusterStart == word.Start && word.ClusterEnd == word.End) return false;
+        for (var characterIndex = word.ClusterStart; characterIndex < word.ClusterEnd; characterIndex++)
+        {
+            if (characterIndex >= word.Start && characterIndex < word.End) continue;
+            if (direction == ConversionDirection.EnglishToRussian &&
+                characterIndex >= word.End &&
+                text[characterIndex] == '/')
+            {
+                return true;
             }
         }
+
+        return false;
     }
 
     private static bool HasContextBoundary(
@@ -643,6 +713,11 @@ public static class LayoutConverter
                     if (candidate == TokenResolution.ConfidentKeep)
                     {
                         resolution = TokenResolution.ConfidentKeep;
+                    }
+                    else if (candidate == TokenResolution.LexicalKeep &&
+                             resolution != TokenResolution.ConfidentKeep)
+                    {
+                        resolution = TokenResolution.LexicalKeep;
                     }
                     else if (candidate == TokenResolution.ConfidentConvert && resolution == TokenResolution.Ambiguous)
                     {

@@ -13,6 +13,8 @@ internal sealed class CodeSafeConversionTests
         CodeLike("{\"text\": \"руддщ\"}");
         NotCodeLike("Это ghbdtn@ текст");
         NotCodeLike("Он сказал \"привет\"");
+        NotCodeLike("z yt gjybvf. gjxtve d hjccbb nfr ckj;yj gjkexbnm yjhvfkmye. hf,jne? gj rfrjq ghbxbyt vyt yt [jnzn lfdfnm yjhvfkmyjt j,jpjdfybt b gjxtve jyb gsnf.ncz cltkfnm vj. ;bpm [e;t bp lyz d ltym c rf;lsv lytv dc` [e;t b [e;t ?");
+        NotCodeLike("z ,s [jntk gjghj,jdfnm gj;bnm d lheujq cnhfyt d yflt;lt yf kextt yflt.cm r vjtve dsgecre bp depf dc` d vbht cnfytn cbkmyj ghjot b dbpe gjkexbnm nj;t eltn cbkmyj ghjot ?nen ukfdyjt dthbnm d ecg[ b yfltznmcz yf kexitt/");
         CodeProcessConverts("\"руддщ\"", "\"hello\"");
         CodeProcessConverts("'руддщ'", "'hello'");
         CodeProcessConverts("руддщ:", "hello:");
