@@ -3,6 +3,7 @@
 # KeyFlip
 
 [![CI](https://github.com/pologovlev-collab/KeyFlip/actions/workflows/ci.yml/badge.svg)](https://github.com/pologovlev-collab/KeyFlip/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/pologovlev-collab/KeyFlip?display_name=tag&sort=semver)](https://github.com/pologovlev-collab/KeyFlip/releases/latest)
 [![Windows 10/11 x64](https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-0078D4?logo=windows)](https://github.com/pologovlev-collab/KeyFlip/releases)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](../../LICENSE)
 
@@ -22,7 +23,7 @@ Select text and press `Ctrl + Shift + K`. Everything runs locally and offline, w
 | Windows 10 / 11 | ARM64 | — | Planned |
 | Linux / macOS | — | — | Not supported |
 
-The release is a portable single-file EXE with the .NET runtime included. [View all releases](https://github.com/pologovlev-collab/KeyFlip/releases).
+The current stable version is **KeyFlip 1.1.0**. It is a portable single-file EXE with the .NET runtime included. [View all releases](https://github.com/pologovlev-collab/KeyFlip/releases).
 
 ## Quick start
 
@@ -35,6 +36,15 @@ The release is a portable single-file EXE with the .NET runtime included. [View 
 After moving the portable EXE, launch it manually once so KeyFlip can refresh its autostart path.
 
 ![KeyFlip settings](../../assets/readme/keyflip-settings.png)
+
+The current application version appears in muted gray text at the bottom of the settings window.
+
+## What's new in 1.1.0
+
+- Reliable conversion of long mixed-layout phrases, including ambiguous short words and user typos.
+- Safe preservation and restoration of empty, text, and image clipboard contents.
+- A visible application version in Settings, startup diagnostics, and EXE properties.
+- Deterministic behavior without requiring Windows system dictionaries.
 
 ## Examples
 
@@ -60,7 +70,7 @@ ghbdtn   vbh file.txt
 
 ## Features
 
-- Smart per-word Russian ↔ English conversion.
+- Context-aware Russian ↔ English conversion with local phrase direction.
 - Complete physical US QWERTY ↔ Russian ЙЦУКЕН mapping, including Shift and symbols.
 - Code-aware conversion that preserves valid syntax and fixes confidently recognized wrong-layout syntax.
 - Formatting and paragraph preservation in Microsoft Word.
@@ -72,7 +82,7 @@ ghbdtn   vbh file.txt
 
 ## How it works
 
-A selection containing one alphabetic token uses direct physical-layout conversion. Known technical acronyms such as `SQL`, `API`, and `HTTP` are protected from accidental conversion. Selections with two or more words use conservative per-word decisions. Spaces, tabs, and line endings are preserved exactly; punctuation attached to a converted word follows the same direction.
+A selection containing one alphabetic token uses direct physical-layout conversion. In longer text, KeyFlip determines a direction for each local clause and then handles ambiguous physical key clusters consistently. Known technical acronyms such as `SQL`, `API`, and `HTTP`, URLs, email addresses, and strongly supported English fragments are protected from accidental conversion. Spaces, tabs, and line endings are preserved exactly; punctuation attached to a converted word follows the same direction.
 
 The normal operation is: protected-context check → clipboard snapshot → Copy → conversion → Paste → clipboard restoration. A confirmed VS Code Integrated Terminal aborts before `Ctrl+C` or any clipboard change; the editor and an unknown `Code.exe` context continue normally.
 
@@ -94,10 +104,10 @@ KeyFlip does not send text anywhere, use AI, collect telemetry, require an accou
 
 The EXE is not code-signed yet, so Windows SmartScreen or antivirus software may show a warning. Do not disable protection: download only from the [official release](https://github.com/pologovlev-collab/KeyFlip/releases), verify SHA-256, or build from source.
 
-SHA-256 for `KeyFlip_windows_x64.exe` version 1.0.0:
+The SHA-256 checksum for every build is published in its GitHub Release description. You can verify a downloaded file with:
 
-```text
-963631ECF8C2FE0A7ACC47779AC0D72ACE76B2E5D4EB634AC6F910A075AC0AC0
+```powershell
+Get-FileHash .\KeyFlip_windows_x64.exe -Algorithm SHA256
 ```
 
 ## Known limitations
@@ -117,6 +127,6 @@ Requirements: Windows and the .NET 8 SDK.
 .\build.ps1
 ```
 
-The script restores dependencies, builds Release, runs all automated tests, and creates a self-contained single-file win-x64 release under `artifacts\release\win-x64`.
+The script performs a clean restore, builds Release, runs all automated tests, and creates a self-contained single-file win-x64 release under `artifacts\candidates\v1.1.0`.
 
 See [docs/ARCHITECTURE.md](../ARCHITECTURE.md) for the technical overview, [CONTRIBUTING.md](../../CONTRIBUTING.md) to contribute, and the [MIT License](../../LICENSE).

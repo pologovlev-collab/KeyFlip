@@ -3,6 +3,7 @@
 # KeyFlip
 
 [![CI](https://github.com/pologovlev-collab/KeyFlip/actions/workflows/ci.yml/badge.svg)](https://github.com/pologovlev-collab/KeyFlip/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/pologovlev-collab/KeyFlip?display_name=tag&sort=semver)](https://github.com/pologovlev-collab/KeyFlip/releases/latest)
 [![Windows 10/11 x64](https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-0078D4?logo=windows)](https://github.com/pologovlev-collab/KeyFlip/releases)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -22,7 +23,7 @@ KeyFlip — небольшая бесплатная Windows-утилита дл�
 | Windows 10 / 11 | ARM64 | — | Planned |
 | Linux / macOS | — | — | Не поддерживается |
 
-Это portable single-file EXE со встроенным .NET runtime: установка .NET отдельно не нужна. [Все версии](https://github.com/pologovlev-collab/KeyFlip/releases).
+Актуальная стабильная версия — **KeyFlip 1.1.0**. Это portable single-file EXE со встроенным .NET runtime: установка .NET отдельно не нужна. [Все версии](https://github.com/pologovlev-collab/KeyFlip/releases).
 
 ## Быстрый старт
 
@@ -35,6 +36,15 @@ KeyFlip — небольшая бесплатная Windows-утилита дл�
 После переноса portable EXE запустите его вручную один раз, чтобы KeyFlip обновил путь автозапуска.
 
 ![Настройки KeyFlip](assets/readme/keyflip-settings.png)
+
+Текущая версия приложения указана серым текстом в нижней части окна настроек.
+
+## Что нового в 1.1.0
+
+- Надёжное преобразование длинных фраз со смешанной раскладкой, включая неоднозначные короткие слова и пользовательские опечатки.
+- Безопасное сохранение и восстановление пустого, текстового и графического содержимого буфера обмена.
+- Явная версия приложения в окне настроек, журнале запуска и свойствах EXE.
+- Детерминированное поведение без обязательной зависимости от системных словарей Windows.
 
 ## Примеры
 
@@ -60,7 +70,7 @@ ghbdtn   vbh file.txt
 
 ## Возможности
 
-- Умное пословное преобразование русского и английского текста.
+- Контекстное преобразование русского и английского текста с определением направления для локальных фраз.
 - Полная физическая карта US QWERTY ↔ ЙЦУКЕН, включая Shift и символы.
 - Code-aware режим, сохраняющий корректный синтаксис и исправляющий уверенно распознанный wrong-layout синтаксис.
 - Сохранение форматирования и структуры абзацев в Microsoft Word.
@@ -72,7 +82,7 @@ ghbdtn   vbh file.txt
 
 ## Как это работает
 
-Для одного буквенного токена KeyFlip выполняет прямое физическое преобразование раскладки. Известные технические сокращения вроде `SQL`, `API` и `HTTP` защищены от случайной замены. Для двух и более слов применяется консервативное решение отдельно для каждого слова. Пробелы, табуляции и переводы строк сохраняются точно; пунктуация рядом с преобразованным словом меняется в том же направлении.
+Для одного буквенного токена KeyFlip выполняет прямое физическое преобразование раскладки. В длинных фразах приложение определяет направление для локального смыслового сегмента, а затем единообразно обрабатывает неоднозначные физические группы клавиш. Известные технические сокращения вроде `SQL`, `API` и `HTTP`, URL, email и подтверждённые английские фрагменты защищены от случайной замены. Пробелы, табуляции и переводы строк сохраняются точно; пунктуация рядом с преобразованным словом меняется в том же направлении.
 
 Последовательность обычной операции: проверка защищённого контекста → сохранение буфера обмена → Copy → преобразование → Paste → восстановление буфера. Подтверждённый VS Code Integrated Terminal останавливает операцию до `Ctrl+C` и изменения буфера; editor и неизвестный контекст `Code.exe` продолжают работать.
 
@@ -94,10 +104,10 @@ KeyFlip не отправляет текст, не использует AI, не
 
 EXE пока не подписан цифровой подписью, поэтому Windows SmartScreen или антивирус могут показать предупреждение. Не отключайте защиту: скачивайте файл только из [официального релиза](https://github.com/pologovlev-collab/KeyFlip/releases), сверяйте SHA-256 или собирайте приложение самостоятельно.
 
-SHA-256 для `KeyFlip_windows_x64.exe` версии 1.0.0:
+SHA-256 каждой сборки публикуется в описании соответствующего GitHub Release. После скачивания файл можно проверить командой:
 
-```text
-963631ECF8C2FE0A7ACC47779AC0D72ACE76B2E5D4EB634AC6F910A075AC0AC0
+```powershell
+Get-FileHash .\KeyFlip_windows_x64.exe -Algorithm SHA256
 ```
 
 ## Известные ограничения
@@ -117,6 +127,6 @@ SHA-256 для `KeyFlip_windows_x64.exe` версии 1.0.0:
 .\build.ps1
 ```
 
-Скрипт выполняет restore, Release build, все автоматические тесты и создаёт self-contained single-file win-x64 релиз в `artifacts\release\win-x64`.
+Скрипт выполняет clean restore, Release build, все автоматические тесты и создаёт self-contained single-file win-x64 релиз в `artifacts\candidates\v1.1.0`.
 
 Технический обзор: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Участие в разработке: [CONTRIBUTING.md](CONTRIBUTING.md). Лицензия: [MIT](LICENSE).

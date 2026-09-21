@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0
+
+- Promoted the fully validated RC4 converter and clipboard safeguards to the current stable release.
+- Made long mixed-layout conversion deterministic without requiring Windows spell-check dictionaries.
+- Preserved ambiguous physical clusters atomically while protecting technical tokens and English islands.
+- Added robust empty, text, same-text, and image clipboard restoration.
+- Displayed the current application version in muted text in the Settings window.
+- Hardened clean builds and release verification against stale binaries or mismatched commits.
+
 ## 1.0.1-rc4 (pre-release)
 
 - Made long mixed-layout conversion deterministic when Windows spell-check dictionaries are absent or only partially available.

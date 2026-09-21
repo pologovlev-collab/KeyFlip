@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $solution = Join-Path $PSScriptRoot 'KeyFlip.sln'
 $applicationProject = Join-Path $PSScriptRoot 'src\KeyFlip\KeyFlip.csproj'
 $testProject = Join-Path $PSScriptRoot 'tests\KeyFlip.Tests\KeyFlip.Tests.csproj'
-$candidateVersion = 'v1.0.1-rc4'
+$candidateVersion = 'v1.1.0'
 $releaseDirectory = Join-Path $PSScriptRoot "artifacts\candidates\$candidateVersion"
 $publishDirectory = Join-Path $PSScriptRoot "artifacts\candidates\.$candidateVersion-publish-win-x64"
 $releaseFileName = 'KeyFlip_windows_x64.exe'
@@ -104,7 +104,7 @@ Remove-Item -LiteralPath $publishDirectory -Recurse -Force
 
 $hash = (Get-FileHash -LiteralPath $releaseExecutable -Algorithm SHA256).Hash
 $productVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($releaseExecutable).ProductVersion
-$expectedProductVersion = "1.0.1-rc4+$shortRevision"
+$expectedProductVersion = "1.1.0+$shortRevision"
 if ($productVersion -ne $expectedProductVersion) {
     throw "Unexpected ProductVersion '$productVersion'; expected '$expectedProductVersion'."
 }

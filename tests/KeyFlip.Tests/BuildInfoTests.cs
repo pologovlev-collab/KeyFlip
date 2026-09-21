@@ -8,9 +8,10 @@ internal sealed class BuildInfoTests
 
     public void Run()
     {
-        Equal("1.0.1-rc4", BuildInfo.Version);
+        Equal("1.1.0", BuildInfo.Version);
+        Equal("KeyFlip 1.1.0", BuildInfo.DisplayVersion);
         True(Path.IsPathFullyQualified(BuildInfo.ProcessPath));
-        True(BuildInfo.StartupMetadata.Contains("version=1.0.1-rc4", StringComparison.Ordinal));
+        True(BuildInfo.StartupMetadata.Contains("version=1.1.0", StringComparison.Ordinal));
         True(BuildInfo.StartupMetadata.Contains($"path={BuildInfo.ProcessPath}", StringComparison.Ordinal));
     }
 
