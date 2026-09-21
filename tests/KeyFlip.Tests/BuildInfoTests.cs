@@ -1,3 +1,4 @@
+using System.Drawing;
 using KeyFlip;
 
 namespace KeyFlip.Tests;
@@ -10,9 +11,16 @@ internal sealed class BuildInfoTests
     {
         Equal("1.1.0", BuildInfo.Version);
         Equal("KeyFlip 1.1.0", BuildInfo.DisplayVersion);
+        SettingsTitleShowsCurrentVersion();
         True(Path.IsPathFullyQualified(BuildInfo.ProcessPath));
         True(BuildInfo.StartupMetadata.Contains("version=1.1.0", StringComparison.Ordinal));
         True(BuildInfo.StartupMetadata.Contains($"path={BuildInfo.ProcessPath}", StringComparison.Ordinal));
+    }
+
+    private void SettingsTitleShowsCurrentVersion()
+    {
+        using var form = new SettingsForm(new AppSettings(), _ => (true, null), SystemIcons.Application);
+        Equal("KeyFlip 1.1.0 — Настройки", form.Text);
     }
 
     private void Equal(string expected, string actual)

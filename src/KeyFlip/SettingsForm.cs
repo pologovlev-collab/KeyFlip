@@ -17,7 +17,7 @@ internal sealed class SettingsForm : Form
         _settings = settings.Clone();
         _apply = apply;
         Icon = applicationIcon;
-        Text = "KeyFlip — Настройки";
+        Text = $"{BuildInfo.DisplayVersion} — Настройки";
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
@@ -46,7 +46,7 @@ internal sealed class SettingsForm : Form
         AcceptButton = save;
         CancelButton = cancel;
 
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 7 };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 6 };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         layout.Controls.Add(_enabled, 0, 0);
@@ -61,15 +61,6 @@ internal sealed class SettingsForm : Form
         layout.SetColumnSpan(layout.GetControlFromPosition(0, 4)!, 2);
         layout.Controls.Add(_excluded, 0, 5);
         layout.SetColumnSpan(_excluded, 2);
-        var version = new Label
-        {
-            Text = BuildInfo.DisplayVersion,
-            AutoSize = true,
-            ForeColor = SystemColors.GrayText,
-            Margin = new Padding(0, 6, 0, 0)
-        };
-        layout.Controls.Add(version, 0, 6);
-        layout.SetColumnSpan(version, 2);
         var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Height = 42, Padding = new Padding(12, 6, 12, 6) };
         buttons.Controls.Add(cancel);
         buttons.Controls.Add(save);

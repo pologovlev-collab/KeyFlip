@@ -37,7 +37,7 @@ After moving the portable EXE, launch it manually once so KeyFlip can refresh it
 
 ![KeyFlip settings](../../assets/readme/keyflip-settings.png)
 
-The current application version appears in muted gray text at the bottom of the settings window.
+The current application version appears in the Settings window title bar beside the Close button.
 
 ## What's new in 1.1.0
 

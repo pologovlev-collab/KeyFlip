@@ -6,7 +6,7 @@
 - Made long mixed-layout conversion deterministic without requiring Windows spell-check dictionaries.
 - Preserved ambiguous physical clusters atomically while protecting technical tokens and English islands.
 - Added robust empty, text, same-text, and image clipboard restoration.
-- Displayed the current application version in muted text in the Settings window.
+- Displayed the current application version in the Settings window title bar.
 - Hardened clean builds and release verification against stale binaries or mismatched commits.
 
 ## 1.0.1-rc4 (pre-release)
